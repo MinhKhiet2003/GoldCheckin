@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Text;
 using System.Threading.RateLimiting;
 using Base.Common;
+using Base.Configuration;
 using Base.Data;
 using Base.Entities;
 using Base.Exceptions;
@@ -45,9 +46,14 @@ builder.Services.AddScoped<ISystemLogRepository, SystemLogRepository>();
 builder.Services.AddScoped<ISystemLogService, SystemLogService>();
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();
+builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.Configure<MailSettings>(builder.Configuration.GetSection(MailSettings.SectionName));
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IRolePermissionService, RolePermissionService>();
 builder.Services.AddScoped<IPasswordHasher<Account>, PasswordHasher<Account>>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 
@@ -99,6 +105,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     return;
                 }
 
+                if (!Guid.TryParse(context.Principal?.FindFirst("sid")?.Value, out var sessionId))
+                {
+                    context.Fail("Phiên đăng nhập không hợp lệ.");
+                    return;
+                }
+
+                var authRepository = context.HttpContext.RequestServices.GetRequiredService<IAuthRepository>();
+                if (!await authRepository.IsRefreshSessionActiveAsync(sessionId, id, context.HttpContext.RequestAborted))
+                {
+                    context.Fail("Phiên đăng nhập đã bị thu hồi hoặc hết hạn.");
+                    return;
+                }
+
                 // Luôn lấy role hiện tại từ database, tránh token cũ giữ quyền sau khi bị hạ quyền.
                 if (context.Principal?.Identity is ClaimsIdentity identity)
                 {
@@ -133,6 +152,21 @@ builder.Services.AddAuthorization(options =>
             policy.AddRequirements(new PermissionRequirement(permission));
         });
     }
+});
+var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("frontend", policy =>
+    {
+        if (corsOrigins.Length == 0)
+        {
+            return;
+        }
+
+        policy.WithOrigins(corsOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
 });
 builder.Services.AddRateLimiter(options =>
 {
@@ -235,6 +269,7 @@ app.UseStaticFiles(new StaticFileOptions
     }
 });
 app.UseRateLimiter();
+app.UseCors("frontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

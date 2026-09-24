@@ -564,6 +564,71 @@ namespace Base.Migrations
                     b.HasKey("Key");
 
                     b.ToTable("SystemSetting", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Key = "system.name",
+                            Description = "Tên hiển thị của hệ thống",
+                            UpdatedAt = new DateTime(2026, 9, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Value = "Base API"
+                        },
+                        new
+                        {
+                            Key = "system.logoUrl",
+                            Description = "Đường dẫn logo hệ thống",
+                            UpdatedAt = new DateTime(2026, 9, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Value = ""
+                        },
+                        new
+                        {
+                            Key = "system.faviconUrl",
+                            Description = "Đường dẫn favicon hệ thống",
+                            UpdatedAt = new DateTime(2026, 9, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Value = ""
+                        },
+                        new
+                        {
+                            Key = "organization.name",
+                            Description = "Tên đơn vị hoặc doanh nghiệp",
+                            UpdatedAt = new DateTime(2026, 9, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Value = ""
+                        },
+                        new
+                        {
+                            Key = "organization.taxCode",
+                            Description = "Mã số thuế",
+                            UpdatedAt = new DateTime(2026, 9, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Value = ""
+                        },
+                        new
+                        {
+                            Key = "organization.address",
+                            Description = "Địa chỉ đơn vị",
+                            UpdatedAt = new DateTime(2026, 9, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Value = ""
+                        },
+                        new
+                        {
+                            Key = "organization.phone",
+                            Description = "Số điện thoại liên hệ",
+                            UpdatedAt = new DateTime(2026, 9, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Value = ""
+                        },
+                        new
+                        {
+                            Key = "organization.email",
+                            Description = "Email liên hệ",
+                            UpdatedAt = new DateTime(2026, 9, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Value = ""
+                        },
+                        new
+                        {
+                            Key = "organization.website",
+                            Description = "Website đơn vị",
+                            UpdatedAt = new DateTime(2026, 9, 24, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Value = ""
+                        });
                 });
 
             modelBuilder.Entity("Base.Entities.UploadedFile", b =>

@@ -9,13 +9,14 @@ namespace Base.Services;
 
 public class JwtTokenService(IConfiguration configuration) : IJwtTokenService
 {
-    public (string Token, DateTime ExpiresAt) Create(Account account)
+    public (string Token, DateTime ExpiresAt) Create(Account account, Guid sessionId)
     {
         var expiresAt = DateTime.UtcNow.AddMinutes(30);
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub, account.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new Claim("sid", sessionId.ToString()),
             new Claim("username", account.Username),
             new Claim("role", account.Role)
         };

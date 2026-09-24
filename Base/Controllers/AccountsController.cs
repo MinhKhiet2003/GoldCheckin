@@ -50,7 +50,11 @@ public class AccountsController(IAccountService accountService) : ControllerBase
         LoginRequest request,
         CancellationToken cancellationToken)
     {
-        var login = await accountService.LoginAsync(request, cancellationToken);
+        var login = await accountService.LoginAsync(
+            request,
+            Request.Headers.UserAgent.ToString(),
+            HttpContext.Connection.RemoteIpAddress?.ToString(),
+            cancellationToken);
         HttpContext.Items["AuthenticatedUserId"] = login.Account.Id;
 
         return Ok(new ApiResponse<LoginResponse>
@@ -182,6 +186,24 @@ public class AccountsController(IAccountService accountService) : ControllerBase
             StatusCode = StatusCodes.Status200OK,
             Success = true,
             Message = "Xóa tài khoản thành công."
+        });
+    }
+
+    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Policy = AppPermissions.ManageRoles)]
+    [HttpPut("{id:guid}/role")]
+    public async Task<ActionResult<ApiResponse<UserResponse>>> AssignRole(
+        Guid id,
+        AssignRoleRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await accountService.AssignRoleAsync(CurrentId, id, request.Role, cancellationToken);
+        return Ok(new ApiResponse<UserResponse>
+        {
+            StatusCode = 200,
+            Success = true,
+            Message = "Gán vai trò cho tài khoản thành công.",
+            Data = result
         });
     }
 }

@@ -79,11 +79,13 @@ Authorization: Bearer <accessToken>
 
 Access token có thời hạn 30 phút. Mỗi request xác minh token, tài khoản có tồn tại/đang hoạt động và lấy lại role hiện tại từ database. Vì vậy token cũ không giữ quyền sau khi tài khoản bị khóa hoặc bị hạ role.
 
-Hệ thống đã có Entity cho `RefreshToken` và `PasswordResetToken` để triển khai tiếp refresh token, đăng xuất nhiều thiết bị, quên mật khẩu và đặt lại mật khẩu. Các endpoint xác thực nâng cao này chưa được công khai cho đến khi có cơ chế gửi email/SMS hoặc kênh trao token an toàn.
+Đăng nhập và `POST /api/auth/refresh` trả thêm refresh token có thời hạn 14 ngày. Refresh token chỉ lưu hash trong database và được xoay vòng sau mỗi lần làm mới. Access token chứa mã phiên và mọi API kiểm tra phiên đó còn hiệu lực, vì vậy `POST /api/auth/logout` thu hồi ngay access token của một thiết bị; `POST /api/auth/logout-all` thu hồi ngay toàn bộ phiên của tài khoản đang đăng nhập. Đổi hoặc đặt lại mật khẩu cũng thu hồi tất cả phiên.
+
+`POST /api/auth/forgot-password` luôn trả thông báo giống nhau để không làm lộ email có tồn tại hay không. Khi chạy Development, response có `resetToken` để test; môi trường Production không trả token và cần tích hợp email/SMS để gửi token cho người dùng. Token đặt lại mật khẩu có thời hạn 30 phút và chỉ dùng một lần.
 
 ## Role và permission
 
-Role trong bảng `"User"` gồm `admin` và `user`. `Permission` là danh mục quyền; `RolePermission` ánh xạ role với permission.
+Role trong bảng `"User"` gồm `admin` và `user`. `Permission` là danh mục quyền; `RolePermission` ánh xạ role với permission. Admin là super-admin và luôn có tất cả quyền; chỉ admin mới được gọi API quản trị role/permission.
 
 | Permission | admin | user |
 |---|---:|---:|
@@ -94,7 +96,7 @@ Role trong bảng `"User"` gồm `admin` và `user`. `Permission` là danh mục
 | `system-logs.read`, `roles.manage`, `permissions.manage` | Có | Không |
 | `settings.manage`, `dashboard.read` | Có | Không |
 
-Đăng ký công khai luôn tạo role `user`. Admin có thể đổi role và khóa/mở khóa qua API cập nhật tài khoản.
+Đăng ký công khai luôn tạo role `user`. Admin khóa/mở khóa qua API cập nhật tài khoản và đổi role qua endpoint riêng. Hệ thống chặn admin tự hạ quyền và chặn hạ quyền admin cuối cùng đang hoạt động.
 
 Khi thêm một permission: thêm hằng số tại `Authorization/AppPermissions.cs`, seed ở `AppDbContext`, tạo policy tại `Program.cs`, rồi gắn `[Authorize(Policy = ...)]` vào endpoint.
 
@@ -104,9 +106,19 @@ Khi thêm một permission: thêm hằng số tại `Authorization/AppPermission
 |---|---|---|
 | POST | `/api/accounts/register` | Đăng ký tài khoản user |
 | POST | `/api/accounts/login` | Đăng nhập và nhận JWT |
+| POST | `/api/auth/refresh` | Làm mới access token và refresh token |
+| POST | `/api/auth/logout` | Đăng xuất một thiết bị bằng refresh token |
+| POST | `/api/auth/logout-all` | Đăng xuất tất cả thiết bị của tôi |
+| POST | `/api/auth/forgot-password` | Tạo yêu cầu quên mật khẩu |
+| POST | `/api/auth/reset-password` | Đặt lại mật khẩu bằng token |
+| POST | `/api/auth/change-password` | Đổi mật khẩu khi đã đăng nhập |
 | GET / PUT | `/api/accounts/me` | Xem/cập nhật thông tin cá nhân |
 | GET | `/api/accounts` | Admin: danh sách, tìm kiếm, lọc, phân trang |
 | GET / PUT / DELETE | `/api/accounts/{id}` | Admin: xem, cập nhật, xóa tài khoản |
+| PUT | `/api/accounts/{id}/role` | Admin: gán role an toàn cho tài khoản |
+| GET | `/api/permissions` | Admin: danh sách permission |
+| GET | `/api/roles` | Admin: danh sách role và permission |
+| PUT | `/api/roles/user/permissions` | Admin: thay permission cho role user |
 | POST | `/api/files/upload` | Upload JPG, PNG, PDF, TXT |
 | POST | `/api/accounts/me/avatar` | Upload và gán avatar JPG/PNG/JPEG cho tôi |
 | GET | `/api/files/{id}` | Xem/tải file của tôi; admin xem mọi file |
@@ -159,6 +171,37 @@ Admin quản lý các cấu hình chung qua `GET /api/system-settings` và `PUT 
 
 Nên dùng các key thống nhất: `system.name`, `system.logoUrl`, `system.faviconUrl`, `organization.name`, `organization.taxCode`, `organization.address`, `organization.phone`, `organization.email`, `organization.website`. Logo và favicon nên upload trước, sau đó lưu URL trả về vào cấu hình.
 
+Các key này đã được seed mặc định khi chạy migration. Chỉ `system.name` có giá trị `Base API`; các key còn lại để trống để admin cập nhật.
+
+## CORS
+
+API cho phép frontend từ `http://localhost:3000` và `http://localhost:5173`. Khi frontend dùng domain khác, thêm domain đó vào `Cors:AllowedOrigins` trong cấu hình môi trường. Không dùng `AllowAnyOrigin` cho API có JWT.
+
+## Gửi email quên mật khẩu
+
+`POST /api/auth/forgot-password` gửi email qua SMTP sau khi tìm thấy tài khoản. Cấu hình mẫu dùng Gmail tại `Base/appsettings.json`:
+
+```json
+"Mail": {
+  "Host": "smtp.gmail.com",
+  "Port": 587,
+  "UseSsl": true,
+  "Username": "your-email@gmail.com",
+  "Password": "gmail-app-password",
+  "FromEmail": "your-email@gmail.com",
+  "FromName": "Base API",
+  "PasswordResetUrl": "http://localhost:5173/reset-password?token={token}"
+}
+```
+
+Với Gmail, bật xác minh hai bước rồi tạo **App Password**; không dùng mật khẩu đăng nhập Gmail. Không commit mật khẩu SMTP. Khi phát triển local, cấu hình bằng User Secrets:
+
+```powershell
+dotnet user-secrets set "Mail:Username" "your-email@gmail.com" --project Base/Base.csproj
+dotnet user-secrets set "Mail:Password" "gmail-app-password" --project Base/Base.csproj
+dotnet user-secrets set "Mail:FromEmail" "your-email@gmail.com" --project Base/Base.csproj
+```
+
 ## Nhật ký hệ thống và audit
 
 Mỗi request `/api` được ghi vào `SystemLog`: người thực hiện, method, path, status code, IP, trace ID, thời gian xử lý và thời điểm.
@@ -192,10 +235,9 @@ Không sửa/xóa migration đã áp dụng ở môi trường dùng chung. Đ�
 
 Danh sách yêu cầu đã có phần nền database/permission nhưng chưa có endpoint nghiệp vụ hoàn chỉnh:
 
-- Refresh token, thu hồi phiên, đăng xuất một/tất cả thiết bị.
-- Quên mật khẩu, đặt lại mật khẩu, đổi mật khẩu; cần tích hợp email/SMS trước khi phát hành.
-- CRUD role/permission, gán permission theo role.
-- Admin tạo tài khoản riêng và cấu hình hệ thống.
+- Tích hợp email/SMS để gửi token quên mật khẩu trong môi trường Production.
+- Tạo role động ngoài `admin` và `user` nếu dự án cần nhiều cấp vai trò.
+- Admin tạo tài khoản riêng.
 - Gửi thông báo từ nghiệp vụ/admin; hiện API mới quản lý thông báo đã có.
 - Xem/tải/xóa file riêng theo quyền; hiện đã có upload và static URL công khai.
 

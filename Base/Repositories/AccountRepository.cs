@@ -18,6 +18,11 @@ public class AccountRepository(AppDbContext dbContext) : IAccountRepository
         return dbContext.Accounts.SingleOrDefaultAsync(account => account.Username == username, cancellationToken);
     }
 
+    public Task<Account?> FindByEmailAsync(string email, CancellationToken cancellationToken)
+    {
+        return dbContext.Accounts.SingleOrDefaultAsync(account => account.Email == email, cancellationToken);
+    }
+
     public Task<bool> ExistsAsync(string username, string email, Guid? exceptId, CancellationToken cancellationToken)
     {
         return dbContext.Accounts.AnyAsync(
@@ -63,6 +68,13 @@ public class AccountRepository(AppDbContext dbContext) : IAccountRepository
     public async Task AddAsync(Account account, CancellationToken cancellationToken)
     {
         await dbContext.Accounts.AddAsync(account, cancellationToken);
+    }
+
+    public Task<int> CountActiveAdminsAsync(CancellationToken cancellationToken)
+    {
+        return dbContext.Accounts.CountAsync(
+            account => account.Role == Authorization.AppRoles.Admin && account.IsActive,
+            cancellationToken);
     }
 
     public void Delete(Account account)

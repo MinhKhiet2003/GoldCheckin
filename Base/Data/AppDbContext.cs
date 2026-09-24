@@ -185,6 +185,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         systemSetting.Property(item => item.Key).HasMaxLength(100);
         systemSetting.Property(item => item.Value).HasMaxLength(4000).IsRequired();
         systemSetting.Property(item => item.Description).HasMaxLength(500);
+        systemSetting.HasData(
+            new SystemSetting { Key = "system.name", Value = "Base API", Description = "Tên hiển thị của hệ thống", UpdatedAt = new DateTime(2026, 9, 24, 0, 0, 0, DateTimeKind.Utc) },
+            new SystemSetting { Key = "system.logoUrl", Value = "", Description = "Đường dẫn logo hệ thống", UpdatedAt = new DateTime(2026, 9, 24, 0, 0, 0, DateTimeKind.Utc) },
+            new SystemSetting { Key = "system.faviconUrl", Value = "", Description = "Đường dẫn favicon hệ thống", UpdatedAt = new DateTime(2026, 9, 24, 0, 0, 0, DateTimeKind.Utc) },
+            new SystemSetting { Key = "organization.name", Value = "", Description = "Tên đơn vị hoặc doanh nghiệp", UpdatedAt = new DateTime(2026, 9, 24, 0, 0, 0, DateTimeKind.Utc) },
+            new SystemSetting { Key = "organization.taxCode", Value = "", Description = "Mã số thuế", UpdatedAt = new DateTime(2026, 9, 24, 0, 0, 0, DateTimeKind.Utc) },
+            new SystemSetting { Key = "organization.address", Value = "", Description = "Địa chỉ đơn vị", UpdatedAt = new DateTime(2026, 9, 24, 0, 0, 0, DateTimeKind.Utc) },
+            new SystemSetting { Key = "organization.phone", Value = "", Description = "Số điện thoại liên hệ", UpdatedAt = new DateTime(2026, 9, 24, 0, 0, 0, DateTimeKind.Utc) },
+            new SystemSetting { Key = "organization.email", Value = "", Description = "Email liên hệ", UpdatedAt = new DateTime(2026, 9, 24, 0, 0, 0, DateTimeKind.Utc) },
+            new SystemSetting { Key = "organization.website", Value = "", Description = "Website đơn vị", UpdatedAt = new DateTime(2026, 9, 24, 0, 0, 0, DateTimeKind.Utc) });
         DefaultAccountSeed.Configure(modelBuilder);
     }
 }

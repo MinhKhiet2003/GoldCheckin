@@ -1,4 +1,5 @@
 using Base.Common;
+using Base.Authorization;
 using Base.Entities;
 using Base.Exceptions;
 using Base.Models.Requests;
@@ -12,7 +13,7 @@ namespace Base.Services;
 public class AccountService(
     IAccountRepository repository,
     IPasswordHasher<Account> passwordHasher,
-    IJwtTokenService tokenService,
+    IAuthService authService,
     AuditContext audit) : IAccountService
 {
     public async Task<UserResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken)
@@ -43,7 +44,7 @@ public class AccountService(
         return UserResponse.From(account);
     }
 
-    public async Task<LoginResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
+    public async Task<LoginResponse> LoginAsync(LoginRequest request, string? deviceName, string? ipAddress, CancellationToken cancellationToken)
     {
         var username = request.Username.Trim().ToLowerInvariant();
         var account = await repository.FindByUsernameAsync(username, cancellationToken);
@@ -71,15 +72,8 @@ public class AccountService(
         account.UpdatedAt = now;
 
         await repository.SaveAsync(cancellationToken);
-        var token = tokenService.Create(account);
         audit.Complete(UserResponse.From(account));
-
-        return new LoginResponse
-        {
-            AccessToken = token.Token,
-            ExpiresAt = token.ExpiresAt,
-            Account = UserResponse.From(account)
-        };
+        return await authService.CreateLoginResponseAsync(account.Id, deviceName, ipAddress, cancellationToken);
     }
 
     public async Task<UserResponse> GetAsync(Guid id, CancellationToken cancellationToken)
@@ -133,11 +127,6 @@ public class AccountService(
         var account = await UpdateProfileAsync(id, request, cancellationToken);
         account.IsActive = request.IsActive;
 
-        if (request.Role is not null)
-        {
-            account.Role = request.Role;
-        }
-
         await repository.SaveAsync(cancellationToken);
         audit.Complete(UserResponse.From(account));
         return UserResponse.From(account);
@@ -150,6 +139,41 @@ public class AccountService(
         repository.Delete(account);
 
         await repository.SaveAsync(cancellationToken);
+    }
+
+    public async Task<UserResponse> AssignRoleAsync(Guid actorId, Guid accountId, string role, CancellationToken cancellationToken)
+    {
+        if (role is not AppRoles.Admin and not AppRoles.User)
+        {
+            throw new ApiException(400, "Vai trò phải là admin hoặc user.");
+        }
+
+        var account = await RequireAsync(accountId, cancellationToken);
+        if (account.Role == role)
+        {
+            return UserResponse.From(account);
+        }
+
+        if (account.Role == AppRoles.Admin && role == AppRoles.User)
+        {
+            if (actorId == accountId)
+            {
+                throw new ApiException(400, "Bạn không thể tự hạ quyền quản trị của mình.");
+            }
+
+            if (await repository.CountActiveAdminsAsync(cancellationToken) <= 1)
+            {
+                throw new ApiException(400, "Hệ thống phải luôn có ít nhất một quản trị viên đang hoạt động.");
+            }
+        }
+
+        audit.Begin("AssignRole", "User", account.Id, UserResponse.From(account));
+        account.Role = role;
+        account.UpdatedAt = DateTime.UtcNow;
+        await repository.SaveAsync(cancellationToken);
+        var response = UserResponse.From(account);
+        audit.Complete(response);
+        return response;
     }
 
     private async Task<Account> RequireAsync(Guid id, CancellationToken cancellationToken)

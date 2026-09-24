@@ -25,6 +25,12 @@ public class PermissionAuthorizationHandler(
             return;
         }
 
+        if (account.Role == AppRoles.Admin)
+        {
+            context.Succeed(requirement);
+            return;
+        }
+
         var permissions = await permissionRepository.GetByRoleAsync(account.Role, cancellationToken);
 
         if (permissions.Contains(requirement.Permission))
