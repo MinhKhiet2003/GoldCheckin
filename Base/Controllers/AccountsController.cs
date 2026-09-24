@@ -1,6 +1,7 @@
 using Base.Authorization;
 using Base.Models.Requests;
 using Base.Models.Responses;
+using Base.Services;
 using Base.Services.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -93,14 +94,39 @@ public class AccountsController(IAccountService accountService) : ControllerBase
         });
     }
 
+    [Authorize(Policy = AppPermissions.UpdateOwnProfile)]
+    [HttpPost("me/avatar")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(FileService.MaxFileSize + 65536)]
+    public async Task<ActionResult<ApiResponse<UserResponse>>> UploadAvatar(
+        [FromForm] UploadFileRequest request,
+        [FromServices] IFileService fileService,
+        CancellationToken cancellationToken)
+    {
+        var extension = Path.GetExtension(request.File.FileName).ToLowerInvariant();
+        if (extension is not ".jpg" and not ".jpeg" and not ".png")
+        {
+            throw new Base.Exceptions.ApiException(400, "Ảnh đại diện phải là file JPG, JPEG hoặc PNG.");
+        }
+
+        var file = await fileService.UploadAsync(request.File, CurrentId, cancellationToken);
+        var account = await accountService.UpdateAvatarAsync(CurrentId, file.Url, cancellationToken);
+        return Ok(new ApiResponse<UserResponse>
+        {
+            StatusCode = 200,
+            Success = true,
+            Message = "Cập nhật ảnh đại diện thành công.",
+            Data = account
+        });
+    }
+
     [Authorize(Policy = AppPermissions.ListUsers)]
     [HttpGet]
     public async Task<ActionResult<ApiResponse<PagedResult<UserResponse>>>> List(
-        CancellationToken cancellationToken,
-        [FromQuery] int pageNumber = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] AccountQueryRequest request,
+        CancellationToken cancellationToken)
     {
-        var accounts = await accountService.ListAsync(pageNumber, pageSize, cancellationToken);
+        var accounts = await accountService.ListAsync(request, cancellationToken);
 
         return Ok(new ApiResponse<PagedResult<UserResponse>>
         {

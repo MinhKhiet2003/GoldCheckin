@@ -10,7 +10,15 @@ public static class AppPermissions
     public const string DeleteUser = "users.delete";
 
     public const string UploadFiles = "files.upload";
+    public const string ReadFiles = "files.read";
+    public const string DeleteFiles = "files.delete";
     public const string ReadSystemLogs = "system-logs.read";
+    public const string ManageRoles = "roles.manage";
+    public const string ManagePermissions = "permissions.manage";
+    public const string ReadNotifications = "notifications.read";
+    public const string UpdateNotifications = "notifications.update";
+    public const string ManageSettings = "settings.manage";
+    public const string ReadDashboard = "dashboard.read";
 
     public static readonly string[] All =
     [
@@ -21,6 +29,14 @@ public static class AppPermissions
         UpdateUser,
         DeleteUser,
         UploadFiles,
-        ReadSystemLogs
+        ReadFiles,
+        DeleteFiles,
+        ReadSystemLogs,
+        ManageRoles,
+        ManagePermissions,
+        ReadNotifications,
+        UpdateNotifications,
+        ManageSettings,
+        ReadDashboard
     ];
 }

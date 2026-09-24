@@ -119,4 +119,40 @@ public class FileService(IWebHostEnvironment environment, IFileRepository reposi
             throw;
         }
     }
+
+    public async Task<UploadedFile> GetAsync(Guid id, Guid userId, bool isAdmin, CancellationToken cancellationToken)
+    {
+        var file = await repository.GetAsync(id, cancellationToken)
+            ?? throw new ApiException(404, "Không tìm thấy file.");
+
+        if (!isAdmin && file.UploadedBy != userId)
+        {
+            throw new ApiException(403, "Bạn không có quyền truy cập file này.");
+        }
+
+        return file;
+    }
+
+    public async Task DeleteAsync(Guid id, Guid userId, bool isAdmin, CancellationToken cancellationToken)
+    {
+        var file = await GetAsync(id, userId, isAdmin, cancellationToken);
+        audit.Begin("Delete", "UploadedFile", file.Id, new UploadFileResponse
+        {
+            Id = file.Id,
+            OriginalName = file.OriginalName,
+            Url = file.Url,
+            ContentType = file.ContentType,
+            Size = file.Size,
+            CreatedAt = file.CreatedAt
+        });
+
+        repository.Delete(file);
+        await repository.SaveAsync(cancellationToken);
+
+        var path = Path.Combine(environment.WebRootPath, "uploads", file.StoredName);
+        if (File.Exists(path))
+        {
+            File.Delete(path);
+        }
+    }
 }

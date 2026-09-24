@@ -22,6 +22,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<SystemLog> SystemLogs => Set<SystemLog>();
 
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+
+    public DbSet<Notification> Notifications => Set<Notification>();
+
+    public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         var account = modelBuilder.Entity<Account>();
@@ -56,7 +64,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             new Permission { Code = AppPermissions.UpdateUser, Name = "Cập nhật tài khoản" },
             new Permission { Code = AppPermissions.DeleteUser, Name = "Xóa tài khoản" },
             new Permission { Code = AppPermissions.UploadFiles, Name = "Tải file lên" },
-            new Permission { Code = AppPermissions.ReadSystemLogs, Name = "Xem nhật ký hệ thống" });
+            new Permission { Code = AppPermissions.ReadFiles, Name = "Xem và tải file" },
+            new Permission { Code = AppPermissions.DeleteFiles, Name = "Xóa file" },
+            new Permission { Code = AppPermissions.ReadSystemLogs, Name = "Xem nhật ký hệ thống" },
+            new Permission { Code = AppPermissions.ManageRoles, Name = "Quản lý vai trò" },
+            new Permission { Code = AppPermissions.ManagePermissions, Name = "Quản lý quyền" },
+            new Permission { Code = AppPermissions.ReadNotifications, Name = "Xem thông báo" },
+            new Permission { Code = AppPermissions.UpdateNotifications, Name = "Cập nhật thông báo" },
+            new Permission { Code = AppPermissions.ManageSettings, Name = "Quản lý cấu hình hệ thống" },
+            new Permission { Code = AppPermissions.ReadDashboard, Name = "Xem dashboard" });
 
         var rolePermission = modelBuilder.Entity<RolePermission>();
         rolePermission.ToTable("RolePermission", table =>
@@ -91,6 +107,26 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             Role = AppRoles.User,
             PermissionCode = AppPermissions.UploadFiles
         });
+        grants.Add(new RolePermission
+        {
+            Role = AppRoles.User,
+            PermissionCode = AppPermissions.ReadFiles
+        });
+        grants.Add(new RolePermission
+        {
+            Role = AppRoles.User,
+            PermissionCode = AppPermissions.DeleteFiles
+        });
+        grants.Add(new RolePermission
+        {
+            Role = AppRoles.User,
+            PermissionCode = AppPermissions.ReadNotifications
+        });
+        grants.Add(new RolePermission
+        {
+            Role = AppRoles.User,
+            PermissionCode = AppPermissions.UpdateNotifications
+        });
         rolePermission.HasData(grants);
 
         var uploadedFile = modelBuilder.Entity<UploadedFile>();
@@ -118,6 +154,37 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         systemLog.Property(item => item.TraceId).HasMaxLength(128).IsRequired();
         systemLog.HasIndex(item => item.CreatedAt);
         systemLog.HasIndex(item => new { item.UserId, item.CreatedAt });
+
+        var refreshToken = modelBuilder.Entity<RefreshToken>();
+        refreshToken.ToTable("RefreshToken");
+        refreshToken.HasKey(item => item.Id);
+        refreshToken.Property(item => item.TokenHash).HasMaxLength(128).IsRequired();
+        refreshToken.Property(item => item.DeviceName).HasMaxLength(200);
+        refreshToken.Property(item => item.IpAddress).HasMaxLength(64);
+        refreshToken.HasIndex(item => item.TokenHash).IsUnique();
+        refreshToken.HasIndex(item => new { item.UserId, item.ExpiresAt });
+
+        var passwordResetToken = modelBuilder.Entity<PasswordResetToken>();
+        passwordResetToken.ToTable("PasswordResetToken");
+        passwordResetToken.HasKey(item => item.Id);
+        passwordResetToken.Property(item => item.TokenHash).HasMaxLength(128).IsRequired();
+        passwordResetToken.HasIndex(item => item.TokenHash).IsUnique();
+        passwordResetToken.HasIndex(item => new { item.UserId, item.ExpiresAt });
+
+        var notification = modelBuilder.Entity<Notification>();
+        notification.ToTable("Notification");
+        notification.HasKey(item => item.Id);
+        notification.Property(item => item.Title).HasMaxLength(200).IsRequired();
+        notification.Property(item => item.Content).HasMaxLength(4000).IsRequired();
+        notification.Property(item => item.Link).HasMaxLength(2048);
+        notification.HasIndex(item => new { item.UserId, item.ReadAt, item.CreatedAt });
+
+        var systemSetting = modelBuilder.Entity<SystemSetting>();
+        systemSetting.ToTable("SystemSetting");
+        systemSetting.HasKey(item => item.Key);
+        systemSetting.Property(item => item.Key).HasMaxLength(100);
+        systemSetting.Property(item => item.Value).HasMaxLength(4000).IsRequired();
+        systemSetting.Property(item => item.Description).HasMaxLength(500);
         DefaultAccountSeed.Configure(modelBuilder);
     }
 }

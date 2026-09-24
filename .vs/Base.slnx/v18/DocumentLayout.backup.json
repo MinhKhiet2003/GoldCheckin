@@ -3,32 +3,56 @@
   "WorkspaceRootPath": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|k:\\ta minh khiet - admin\\project\\base\\base\\migrations\\20260923082628_systemlogdetails.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|solutionrelative:base\\migrations\\20260923082628_systemlogdetails.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|k:\\ta minh khiet - admin\\project\\base\\base\\entities\\notification.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|solutionrelative:base\\entities\\notification.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|k:\\ta minh khiet - admin\\project\\base\\base\\authorization\\apppermissions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|solutionrelative:base\\authorization\\apppermissions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|k:\\ta minh khiet - admin\\project\\base\\base\\entities\\passwordresettoken.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|solutionrelative:base\\entities\\passwordresettoken.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|k:\\ta minh khiet - admin\\project\\base\\base\\authorization\\approles.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|solutionrelative:base\\authorization\\approles.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|k:\\ta minh khiet - admin\\project\\base\\base\\entities\\refreshtoken.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|solutionrelative:base\\entities\\refreshtoken.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|k:\\ta minh khiet - admin\\project\\base\\base\\authorization\\permissionauthorizationhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|solutionrelative:base\\authorization\\permissionauthorizationhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|k:\\ta minh khiet - admin\\project\\base\\base\\entities\\systemsetting.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|solutionrelative:base\\entities\\systemsetting.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|k:\\ta minh khiet - admin\\project\\base\\base\\authorization\\permissionrequirement.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|solutionrelative:base\\authorization\\permissionrequirement.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|k:\\ta minh khiet - admin\\project\\base\\base\\services\\accountservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|solutionrelative:base\\services\\accountservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|k:\\ta minh khiet - admin\\project\\base\\base\\models\\responses\\uploadfileresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|solutionrelative:base\\models\\responses\\uploadfileresponse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
+      "AbsoluteMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|k:\\ta minh khiet - admin\\project\\base\\base\\authorization\\permissionrequirement.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|solutionrelative:base\\authorization\\permissionrequirement.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|k:\\ta minh khiet - admin\\project\\base\\base\\authorization\\permissionauthorizationhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|solutionrelative:base\\authorization\\permissionauthorizationhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|k:\\ta minh khiet - admin\\project\\base\\base\\authorization\\approles.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|solutionrelative:base\\authorization\\approles.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|k:\\ta minh khiet - admin\\project\\base\\base\\migrations\\20260923082628_systemlogdetails.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|solutionrelative:base\\migrations\\20260923082628_systemlogdetails.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|k:\\ta minh khiet - admin\\project\\base\\base\\controllers\\systemlogscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|solutionrelative:base\\controllers\\systemlogscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|k:\\ta minh khiet - admin\\project\\base\\base\\controllers\\filescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|solutionrelative:base\\controllers\\filescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|k:\\ta minh khiet - admin\\project\\base\\base\\authorization\\apppermissions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|solutionrelative:base\\authorization\\apppermissions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{379B3619-C146-7095-6D47-8AF5F1F2DDAF}|Base\\Base.csproj|k:\\ta minh khiet - admin\\project\\base\\base\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
@@ -107,19 +131,155 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "20260923082628_SystemLogDetails.cs",
-              "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Migrations\\20260923082628_SystemLogDetails.cs",
-              "RelativeDocumentMoniker": "Base\\Migrations\\20260923082628_SystemLogDetails.cs",
-              "ToolTip": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Migrations\\20260923082628_SystemLogDetails.cs",
-              "RelativeToolTip": "Base\\Migrations\\20260923082628_SystemLogDetails.cs",
-              "ViewState": "AgIAADwAAAAAAAAAAAAowFEAAAAAAAAAAAAAAA==",
+              "Title": "Notification.cs",
+              "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Entities\\Notification.cs",
+              "RelativeDocumentMoniker": "Base\\Entities\\Notification.cs",
+              "ToolTip": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Entities\\Notification.cs",
+              "RelativeToolTip": "Base\\Entities\\Notification.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-23T08:26:38.473Z",
+              "WhenOpened": "2026-09-24T02:42:45.896Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
+              "Title": "PasswordResetToken.cs",
+              "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Entities\\PasswordResetToken.cs",
+              "RelativeDocumentMoniker": "Base\\Entities\\PasswordResetToken.cs",
+              "ToolTip": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Entities\\PasswordResetToken.cs",
+              "RelativeToolTip": "Base\\Entities\\PasswordResetToken.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-24T02:42:40.513Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "RefreshToken.cs",
+              "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Entities\\RefreshToken.cs",
+              "RelativeDocumentMoniker": "Base\\Entities\\RefreshToken.cs",
+              "ToolTip": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Entities\\RefreshToken.cs",
+              "RelativeToolTip": "Base\\Entities\\RefreshToken.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-24T02:42:35.021Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "SystemSetting.cs",
+              "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Entities\\SystemSetting.cs",
+              "RelativeDocumentMoniker": "Base\\Entities\\SystemSetting.cs",
+              "ToolTip": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Entities\\SystemSetting.cs",
+              "RelativeToolTip": "Base\\Entities\\SystemSetting.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-24T02:42:33.299Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "AccountService.cs",
+              "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Services\\AccountService.cs",
+              "RelativeDocumentMoniker": "Base\\Services\\AccountService.cs",
+              "ToolTip": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Services\\AccountService.cs",
+              "RelativeToolTip": "Base\\Services\\AccountService.cs",
+              "ViewState": "AgIAADkAAAAAAAAAAAAowEwAAAAgAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-23T10:32:06.445Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "SystemLogsController.cs",
+              "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Controllers\\SystemLogsController.cs",
+              "RelativeDocumentMoniker": "Base\\Controllers\\SystemLogsController.cs",
+              "ToolTip": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Controllers\\SystemLogsController.cs",
+              "RelativeToolTip": "Base\\Controllers\\SystemLogsController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACsAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-23T08:55:09.76Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "20260923082628_SystemLogDetails.cs",
+              "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Migrations\\20260923082628_SystemLogDetails.cs",
+              "RelativeDocumentMoniker": "Base\\Migrations\\20260923082628_SystemLogDetails.cs",
+              "ToolTip": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Migrations\\20260923082628_SystemLogDetails.cs",
+              "RelativeToolTip": "Base\\Migrations\\20260923082628_SystemLogDetails.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEsAAAAoAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-23T08:26:38.473Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "AppRoles.cs",
+              "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Authorization\\AppRoles.cs",
+              "RelativeDocumentMoniker": "Base\\Authorization\\AppRoles.cs",
+              "ToolTip": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Authorization\\AppRoles.cs",
+              "RelativeToolTip": "Base\\Authorization\\AppRoles.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-23T08:17:34.999Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "PermissionAuthorizationHandler.cs",
+              "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Authorization\\PermissionAuthorizationHandler.cs",
+              "RelativeDocumentMoniker": "Base\\Authorization\\PermissionAuthorizationHandler.cs",
+              "ToolTip": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Authorization\\PermissionAuthorizationHandler.cs",
+              "RelativeToolTip": "Base\\Authorization\\PermissionAuthorizationHandler.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-23T08:17:32.072Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "PermissionRequirement.cs",
+              "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Authorization\\PermissionRequirement.cs",
+              "RelativeDocumentMoniker": "Base\\Authorization\\PermissionRequirement.cs",
+              "ToolTip": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Authorization\\PermissionRequirement.cs",
+              "RelativeToolTip": "Base\\Authorization\\PermissionRequirement.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-23T08:17:30.192Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "UploadFileResponse.cs",
+              "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Models\\Responses\\UploadFileResponse.cs",
+              "RelativeDocumentMoniker": "Base\\Models\\Responses\\UploadFileResponse.cs",
+              "ToolTip": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Models\\Responses\\UploadFileResponse.cs",
+              "RelativeToolTip": "Base\\Models\\Responses\\UploadFileResponse.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-23T08:17:09.855Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "FilesController.cs",
+              "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Controllers\\FilesController.cs",
+              "RelativeDocumentMoniker": "Base\\Controllers\\FilesController.cs",
+              "ToolTip": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Controllers\\FilesController.cs",
+              "RelativeToolTip": "Base\\Controllers\\FilesController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABUAAAAtAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-23T08:16:50.088Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
               "Title": "AppPermissions.cs",
               "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Authorization\\AppPermissions.cs",
               "RelativeDocumentMoniker": "Base\\Authorization\\AppPermissions.cs",
@@ -132,72 +292,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "AppRoles.cs",
-              "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Authorization\\AppRoles.cs",
-              "RelativeDocumentMoniker": "Base\\Authorization\\AppRoles.cs",
-              "ToolTip": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Authorization\\AppRoles.cs",
-              "RelativeToolTip": "Base\\Authorization\\AppRoles.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-23T08:17:34.999Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "PermissionAuthorizationHandler.cs",
-              "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Authorization\\PermissionAuthorizationHandler.cs",
-              "RelativeDocumentMoniker": "Base\\Authorization\\PermissionAuthorizationHandler.cs",
-              "ToolTip": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Authorization\\PermissionAuthorizationHandler.cs",
-              "RelativeToolTip": "Base\\Authorization\\PermissionAuthorizationHandler.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-23T08:17:32.072Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "PermissionRequirement.cs",
-              "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Authorization\\PermissionRequirement.cs",
-              "RelativeDocumentMoniker": "Base\\Authorization\\PermissionRequirement.cs",
-              "ToolTip": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Authorization\\PermissionRequirement.cs",
-              "RelativeToolTip": "Base\\Authorization\\PermissionRequirement.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-23T08:17:30.192Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "UploadFileResponse.cs",
-              "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Models\\Responses\\UploadFileResponse.cs",
-              "RelativeDocumentMoniker": "Base\\Models\\Responses\\UploadFileResponse.cs",
-              "ToolTip": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Models\\Responses\\UploadFileResponse.cs",
-              "RelativeToolTip": "Base\\Models\\Responses\\UploadFileResponse.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-23T08:17:09.855Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "FilesController.cs",
-              "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Controllers\\FilesController.cs",
-              "RelativeDocumentMoniker": "Base\\Controllers\\FilesController.cs",
-              "ToolTip": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Controllers\\FilesController.cs",
-              "RelativeToolTip": "Base\\Controllers\\FilesController.cs",
-              "ViewState": "AgIAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-23T08:16:50.088Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 13,
               "Title": "appsettings.json",
               "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\appsettings.json",
               "RelativeDocumentMoniker": "Base\\appsettings.json",
@@ -205,12 +300,11 @@
               "RelativeToolTip": "Base\\appsettings.json",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2026-09-23T08:15:19.016Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-23T08:15:19.016Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 15,
               "Title": "20260923080254_InitialCreate.cs",
               "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Migrations\\20260923080254_InitialCreate.cs",
               "RelativeDocumentMoniker": "Base\\Migrations\\20260923080254_InitialCreate.cs",
@@ -218,12 +312,11 @@
               "RelativeToolTip": "Base\\Migrations\\20260923080254_InitialCreate.cs",
               "ViewState": "AgIAAE8AAAAAAAAAAAAgwGcAAAA1AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-23T08:02:59.512Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-23T08:02:59.512Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 18,
               "Title": "ApiException.cs",
               "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Exceptions\\ApiException.cs",
               "RelativeDocumentMoniker": "Base\\Exceptions\\ApiException.cs",
@@ -231,12 +324,11 @@
               "RelativeToolTip": "Base\\Exceptions\\ApiException.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-23T07:53:38.671Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-23T07:53:38.671Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 17,
               "Title": "ApiConfigurationExtensions.cs",
               "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Extensions\\ApiConfigurationExtensions.cs",
               "RelativeDocumentMoniker": "Base\\Extensions\\ApiConfigurationExtensions.cs",
@@ -244,12 +336,11 @@
               "RelativeToolTip": "Base\\Extensions\\ApiConfigurationExtensions.cs",
               "ViewState": "AgIAAD4AAAAAAAAAAAAuwE4AAAAqAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-23T07:53:17.415Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-23T07:53:17.415Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 13,
+              "DocumentIndex": 19,
               "Title": "AdminUpdateRequest.cs",
               "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Models\\Requests\\AdminUpdateRequest.cs",
               "RelativeDocumentMoniker": "Base\\Models\\Requests\\AdminUpdateRequest.cs",
@@ -257,12 +348,11 @@
               "RelativeToolTip": "Base\\Models\\Requests\\AdminUpdateRequest.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-23T07:53:10.807Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-23T07:53:10.807Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 14,
+              "DocumentIndex": 20,
               "Title": "ProfileRequest.cs",
               "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Models\\Requests\\ProfileRequest.cs",
               "RelativeDocumentMoniker": "Base\\Models\\Requests\\ProfileRequest.cs",
@@ -270,12 +360,11 @@
               "RelativeToolTip": "Base\\Models\\Requests\\ProfileRequest.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-23T07:53:09.46Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-23T07:53:09.46Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 14,
               "Title": "Program.cs",
               "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Program.cs",
               "RelativeDocumentMoniker": "Base\\Program.cs",
@@ -283,12 +372,11 @@
               "RelativeToolTip": "Base\\Program.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAANQAAAAaAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-23T07:52:22.527Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-23T07:52:22.527Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 16,
               "Title": "IJwtTokenService.cs",
               "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Services\\IServices\\IJwtTokenService.cs",
               "RelativeDocumentMoniker": "Base\\Services\\IServices\\IJwtTokenService.cs",
@@ -296,12 +384,11 @@
               "RelativeToolTip": "Base\\Services\\IServices\\IJwtTokenService.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-23T08:02:33.152Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-23T08:02:33.152Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 15,
+              "DocumentIndex": 21,
               "Title": "RegisterRequest.cs",
               "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Models\\Requests\\RegisterRequest.cs",
               "RelativeDocumentMoniker": "Base\\Models\\Requests\\RegisterRequest.cs",
@@ -309,12 +396,11 @@
               "RelativeToolTip": "Base\\Models\\Requests\\RegisterRequest.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-23T07:53:07.223Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-23T07:53:07.223Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 16,
+              "DocumentIndex": 22,
               "Title": "ApiResponse.cs",
               "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Models\\Responses\\ApiResponse.cs",
               "RelativeDocumentMoniker": "Base\\Models\\Responses\\ApiResponse.cs",
@@ -322,12 +408,11 @@
               "RelativeToolTip": "Base\\Models\\Responses\\ApiResponse.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-23T07:53:04.974Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-23T07:53:04.974Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 17,
+              "DocumentIndex": 23,
               "Title": "LoginResponse.cs",
               "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Models\\Responses\\LoginResponse.cs",
               "RelativeDocumentMoniker": "Base\\Models\\Responses\\LoginResponse.cs",
@@ -335,12 +420,11 @@
               "RelativeToolTip": "Base\\Models\\Responses\\LoginResponse.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-23T07:53:03.133Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-23T07:53:03.133Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 18,
+              "DocumentIndex": 24,
               "Title": "PagedResult.cs",
               "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Models\\Responses\\PagedResult.cs",
               "RelativeDocumentMoniker": "Base\\Models\\Responses\\PagedResult.cs",
@@ -348,12 +432,11 @@
               "RelativeToolTip": "Base\\Models\\Responses\\PagedResult.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-23T07:53:01.703Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-23T07:53:01.703Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 19,
+              "DocumentIndex": 25,
               "Title": "UserResponse.cs",
               "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Models\\Responses\\UserResponse.cs",
               "RelativeDocumentMoniker": "Base\\Models\\Responses\\UserResponse.cs",
@@ -361,12 +444,11 @@
               "RelativeToolTip": "Base\\Models\\Responses\\UserResponse.cs",
               "ViewState": "AgIAAAUAAAAAAAAAAAAQwAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-23T07:52:59.103Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-23T07:52:59.103Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 21,
+              "DocumentIndex": 27,
               "Title": "AppDbContextFactory.cs",
               "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Data\\AppDbContextFactory.cs",
               "RelativeDocumentMoniker": "Base\\Data\\AppDbContextFactory.cs",
@@ -374,12 +456,11 @@
               "RelativeToolTip": "Base\\Data\\AppDbContextFactory.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-23T07:47:37.39Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-23T07:47:37.39Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 22,
+              "DocumentIndex": 28,
               "Title": "AppDbContext.cs",
               "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Data\\AppDbContext.cs",
               "RelativeDocumentMoniker": "Base\\Data\\AppDbContext.cs",
@@ -387,12 +468,11 @@
               "RelativeToolTip": "Base\\Data\\AppDbContext.cs",
               "ViewState": "AgIAAAQAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-23T07:47:32.664Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-23T07:47:32.664Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 20,
+              "DocumentIndex": 26,
               "Title": "AccountsController.cs",
               "DocumentMoniker": "K:\\Ta Minh Khiet - Admin\\Project\\Base\\Base\\Controllers\\AccountsController.cs",
               "RelativeDocumentMoniker": "Base\\Controllers\\AccountsController.cs",
@@ -400,8 +480,7 @@
               "RelativeToolTip": "Base\\Controllers\\AccountsController.cs",
               "ViewState": "AgIAAH8AAAAAAAAAAAAUwKAAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-23T07:47:24.424Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-09-23T07:47:24.424Z"
             }
           ]
         }

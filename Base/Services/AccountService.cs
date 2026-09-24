@@ -88,22 +88,22 @@ public class AccountService(
         return UserResponse.From(account);
     }
 
-    public async Task<PagedResult<UserResponse>> ListAsync(int pageNumber, int pageSize, CancellationToken cancellationToken)
+    public async Task<PagedResult<UserResponse>> ListAsync(AccountQueryRequest request, CancellationToken cancellationToken)
     {
-        if (pageNumber < 1 || pageSize < 1 || pageSize > 100 || pageNumber > int.MaxValue / pageSize)
+        if (request.PageNumber < 1 || request.PageSize < 1 || request.PageSize > 100 || request.PageNumber > int.MaxValue / request.PageSize)
         {
             throw new ApiException(400, "Số trang phải lớn hơn 0 và nằm trong giới hạn cho phép; kích thước trang phải từ 1 đến 100.");
         }
 
-        var (items, total) = await repository.ListAsync(pageNumber, pageSize, cancellationToken);
+        var (items, total) = await repository.ListAsync(request, cancellationToken);
 
         return new PagedResult<UserResponse>
         {
             Items = items.Select(UserResponse.From).ToList(),
-            PageNumber = pageNumber,
-            PageSize = pageSize,
+            PageNumber = request.PageNumber,
+            PageSize = request.PageSize,
             TotalItems = total,
-            TotalPages = (int)Math.Ceiling(total / (double)pageSize)
+            TotalPages = (int)Math.Ceiling(total / (double)request.PageSize)
         };
     }
 
@@ -114,6 +114,18 @@ public class AccountService(
 
         audit.Complete(UserResponse.From(account));
         return UserResponse.From(account);
+    }
+
+    public async Task<UserResponse> UpdateAvatarAsync(Guid id, string avatarUrl, CancellationToken cancellationToken)
+    {
+        var account = await RequireAsync(id, cancellationToken);
+        audit.Begin("Update", "User", account.Id, UserResponse.From(account));
+        account.AvatarUrl = avatarUrl;
+        account.UpdatedAt = DateTime.UtcNow;
+        await repository.SaveAsync(cancellationToken);
+        var response = UserResponse.From(account);
+        audit.Complete(response);
+        return response;
     }
 
     public async Task<UserResponse> AdminUpdateAsync(Guid id, AdminUpdateRequest request, CancellationToken cancellationToken)

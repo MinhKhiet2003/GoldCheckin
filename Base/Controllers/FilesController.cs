@@ -14,6 +14,8 @@ namespace Base.Controllers;
 [Authorize(Policy = AppPermissions.UploadFiles)]
 public class FilesController(IFileService service) : ControllerBase
 {
+    private Guid CurrentUserId => Guid.Parse(User.FindFirst("sub")!.Value);
+
     [HttpPost("upload")]
     [Consumes("multipart/form-data")]
     [RequestSizeLimit(FileService.MaxFileSize + 65536)]
@@ -22,8 +24,7 @@ public class FilesController(IFileService service) : ControllerBase
         [FromForm] UploadFileRequest request,
         CancellationToken cancellationToken)
     {
-        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
-        var result = await service.UploadAsync(request.File, userId, cancellationToken);
+        var result = await service.UploadAsync(request.File, CurrentUserId, cancellationToken);
 
         return Ok(new ApiResponse<UploadFileResponse>
         {
@@ -32,5 +33,27 @@ public class FilesController(IFileService service) : ControllerBase
             Message = "Tải file lên thành công.",
             Data = result
         });
+    }
+
+    [Authorize(Policy = AppPermissions.ReadFiles)]
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> View(Guid id, [FromQuery] bool download, CancellationToken cancellationToken)
+    {
+        var file = await service.GetAsync(id, CurrentUserId, User.IsInRole(AppRoles.Admin), cancellationToken);
+        var path = Path.Combine(HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().WebRootPath, "uploads", file.StoredName);
+        if (!System.IO.File.Exists(path))
+        {
+            return NotFound(new ApiResponse<object> { StatusCode = 404, Success = false, Message = "Không tìm thấy file trên máy chủ." });
+        }
+
+        return PhysicalFile(path, file.ContentType, download ? file.OriginalName : null, enableRangeProcessing: true);
+    }
+
+    [Authorize(Policy = AppPermissions.DeleteFiles)]
+    [HttpDelete("{id:guid}")]
+    public async Task<ActionResult<ApiResponse<object>>> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        await service.DeleteAsync(id, CurrentUserId, User.IsInRole(AppRoles.Admin), cancellationToken);
+        return Ok(new ApiResponse<object> { StatusCode = 200, Success = true, Message = "Xóa file thành công." });
     }
 }

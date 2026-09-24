@@ -1,0 +1,13 @@
+# Visual Studio configuration local to each machine
+.vs/
+
+# Build artifacts
+**/bin/
+**/obj/
+
+# User-specific project settings
+*.csproj.user
+
+# User-uploaded runtime files; keep the placeholder rule
+Base/wwwroot/uploads/*
+!Base/wwwroot/uploads/.gitignore

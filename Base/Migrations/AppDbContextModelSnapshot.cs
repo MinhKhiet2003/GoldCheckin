@@ -124,6 +124,75 @@ namespace Base.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Base.Entities.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Link")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "ReadAt", "CreatedAt");
+
+                    b.ToTable("Notification", (string)null);
+                });
+
+            modelBuilder.Entity("Base.Entities.PasswordResetToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime?>("UsedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "ExpiresAt");
+
+                    b.ToTable("PasswordResetToken", (string)null);
+                });
+
             modelBuilder.Entity("Base.Entities.Permission", b =>
                 {
                     b.Property<string>("Code")
@@ -177,9 +246,90 @@ namespace Base.Migrations
                         },
                         new
                         {
+                            Code = "files.read",
+                            Name = "Xem và tải file"
+                        },
+                        new
+                        {
+                            Code = "files.delete",
+                            Name = "Xóa file"
+                        },
+                        new
+                        {
                             Code = "system-logs.read",
                             Name = "Xem nhật ký hệ thống"
+                        },
+                        new
+                        {
+                            Code = "roles.manage",
+                            Name = "Quản lý vai trò"
+                        },
+                        new
+                        {
+                            Code = "permissions.manage",
+                            Name = "Quản lý quyền"
+                        },
+                        new
+                        {
+                            Code = "notifications.read",
+                            Name = "Xem thông báo"
+                        },
+                        new
+                        {
+                            Code = "notifications.update",
+                            Name = "Cập nhật thông báo"
+                        },
+                        new
+                        {
+                            Code = "settings.manage",
+                            Name = "Quản lý cấu hình hệ thống"
+                        },
+                        new
+                        {
+                            Code = "dashboard.read",
+                            Name = "Xem dashboard"
                         });
+                });
+
+            modelBuilder.Entity("Base.Entities.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeviceName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "ExpiresAt");
+
+                    b.ToTable("RefreshToken", (string)null);
                 });
 
             modelBuilder.Entity("Base.Entities.RolePermission", b =>
@@ -240,7 +390,47 @@ namespace Base.Migrations
                         new
                         {
                             Role = "admin",
+                            PermissionCode = "files.read"
+                        },
+                        new
+                        {
+                            Role = "admin",
+                            PermissionCode = "files.delete"
+                        },
+                        new
+                        {
+                            Role = "admin",
                             PermissionCode = "system-logs.read"
+                        },
+                        new
+                        {
+                            Role = "admin",
+                            PermissionCode = "roles.manage"
+                        },
+                        new
+                        {
+                            Role = "admin",
+                            PermissionCode = "permissions.manage"
+                        },
+                        new
+                        {
+                            Role = "admin",
+                            PermissionCode = "notifications.read"
+                        },
+                        new
+                        {
+                            Role = "admin",
+                            PermissionCode = "notifications.update"
+                        },
+                        new
+                        {
+                            Role = "admin",
+                            PermissionCode = "settings.manage"
+                        },
+                        new
+                        {
+                            Role = "admin",
+                            PermissionCode = "dashboard.read"
                         },
                         new
                         {
@@ -256,6 +446,26 @@ namespace Base.Migrations
                         {
                             Role = "user",
                             PermissionCode = "files.upload"
+                        },
+                        new
+                        {
+                            Role = "user",
+                            PermissionCode = "files.read"
+                        },
+                        new
+                        {
+                            Role = "user",
+                            PermissionCode = "files.delete"
+                        },
+                        new
+                        {
+                            Role = "user",
+                            PermissionCode = "notifications.read"
+                        },
+                        new
+                        {
+                            Role = "user",
+                            PermissionCode = "notifications.update"
                         });
                 });
 
@@ -331,6 +541,29 @@ namespace Base.Migrations
                     b.HasIndex("UserId", "CreatedAt");
 
                     b.ToTable("SystemLog", (string)null);
+                });
+
+            modelBuilder.Entity("Base.Entities.SystemSetting", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.HasKey("Key");
+
+                    b.ToTable("SystemSetting", (string)null);
                 });
 
             modelBuilder.Entity("Base.Entities.UploadedFile", b =>

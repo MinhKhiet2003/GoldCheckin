@@ -1,117 +1,21 @@
 # Base API
 
-.NET 10, JWT Bearer, EF Core và PostgreSQL.
+Base API là nền tảng .NET 10 cho các dự án cần quản lý người dùng, xác thực JWT, phân quyền, file, thông báo và nhật ký hoạt động. Dự án dùng ASP.NET Core, Entity Framework Core và PostgreSQL.
 
-## Cấu trúc
+## Khởi động dự án
 
-- Controllers: tiếp nhận yêu cầu và trả ApiResponse<T>.
-- Services/IServices và Services: hợp đồng và xử lý nghiệp vụ.
-- Repositories/IRepositories và Repositories: hợp đồng và truy cập dữ liệu.
-- Data: DbContext và factory phục vụ migration.
-- Entities: thực thể lưu trong database.
-- Models/Requests: mỗi DTO đầu vào nằm trong một file riêng.
-- Models/Responses: UserResponse, LoginResponse, ApiResponse<T>, PagedResult<T>.
-- Exceptions: lỗi nghiệp vụ.
-- Common: ghi phản hồi lỗi chung.
-- Extensions: cấu hình validation và OpenAPI.
-- Migrations: lịch sử cấu trúc database, cần giữ để cập nhật database.
-
-## Chạy
-
-Cấu hình ConnectionStrings:DefaultConnection và Jwt trong Base/appsettings.json.
-Chạy tại thư mục chứa Base.slnx:
+1. Cập nhật `Base/appsettings.json` với chuỗi kết nối PostgreSQL và cấu hình JWT.
+2. Dùng database mới hoặc trống nếu database cũ còn lịch sử migration trước khi dự án được tạo lại.
+3. Chạy tại thư mục chứa `Base.slnx`:
 
 ```powershell
 dotnet ef database update --project Base/Base.csproj
 dotnet run --project Base/Base.csproj --launch-profile https
 ```
 
-Swagger: https://localhost:7015/swagger khi chạy môi trường Development.
-Đăng nhập, lấy data.accessToken và dán vào Authorize (không thêm tiền tố Bearer).
+Swagger chạy tại `https://localhost:7015/swagger` trong môi trường Development.
 
-## API
-
-| Phương thức | Đường dẫn | Quyền |
-|---|---|---|
-| POST | /api/accounts/register | Công khai |
-| POST | /api/accounts/login | Công khai |
-| GET | /api/accounts/me | Đăng nhập |
-| PUT | /api/accounts/me | Đăng nhập, chỉ sửa hồ sơ của mình |
-| GET | /api/accounts?pageNumber=1&pageSize=20 | Admin |
-| GET | /api/accounts/{id} | Admin |
-| PUT | /api/accounts/{id} | Admin |
-| DELETE | /api/accounts/{id} | Admin, xóa vĩnh viễn |
-
-Phân quyền sử dụng cột Role trong bảng User và bảng Permission/RolePermission; không còn sử dụng Authorization:AdminAccountIds.
-PUT thay thế toàn bộ hồ sơ: FullName/Email bắt buộc, các trường tùy chọn bị bỏ qua sẽ được đặt null. AdminUpdateRequest có thêm IsActive. Username không đổi sau đăng ký.
-
-## Phản hồi chung
-
-API trả ApiResponse<T>, gồm statusCode, success, message, data, errors. Tên thuộc tính JSON dùng camelCase. HTTP status khớp với statusCode trong body.
-Danh sách trả ApiResponse<PagedResult<UserResponse>>:
-
-```json
-{
-  "statusCode": 200,
-  "success": true,
-  "message": "Lấy danh sách tài khoản thành công.",
-  "data": {
-    "items": [],
-    "pageNumber": 1,
-    "pageSize": 20,
-    "totalItems": 0,
-    "totalPages": 0
-  },
-  "errors": null
-}
-```
-
-Lỗi validation chứa errors dạng từ điển tên trường và danh sách thông báo. Các lỗi nghiệp vụ, xác thực, phân quyền, đường dẫn API, giới hạn tần suất và lỗi máy chủ dùng cùng cấu trúc. Không trả thông tin exception nội bộ cho client.
-Đăng ký thành công trả 201; đọc, đăng nhập, cập nhật và xóa trả 200. Xóa có data = null. Không dùng 204 để phản hồi xóa vẫn có body ApiResponse.
-Phân trang dùng pageNumber thay cho page; totalItems thay cho totalCount. PageSize từ 1 đến 100.
-Swagger UI và tài liệu OpenAPI giữ định dạng riêng để trình duyệt và công cụ đọc được.
-
-## Quy tắc tài khoản
-
-Password được băm tại máy chủ; không trả PasswordHash. Password dài 12–128 ký tự. Username 3–50 ký tự, chỉ chữ Latin, số, dấu chấm, gạch ngang và gạch dưới. Username/email được chuẩn hóa chữ thường và kiểm tra trùng.
-Gender: Male, Female, Other, PreferNotToSay hoặc null. DateOfBirth không ở tương lai.
-Token có thời hạn 30 phút; tài khoản bị khóa hoặc xóa sẽ bị từ chối. Đổi email/điện thoại đặt lại cờ xác minh. Các luồng OTP, xác minh email/SMS, quên/đổi mật khẩu và refresh token chưa được triển khai.
-Các file test, request mẫu và script SQL trùng với migration đã được xóa theo yêu cầu.
-## Role và permission
-
-Bộ migration đã được tạo lại từ đầu thành InitialCreate. Migration tạo User, Permission, RolePermission và tài khoản admin mặc định. Chỉ áp dụng lên database mới/trống. Database cũ vẫn giữ nguyên và không tương thích với lịch sử migration mới; không chạy database update trực tiếp lên database cũ. Hãy đổi Database trong ConnectionStrings:DefaultConnection sang tên database mới trước khi chạy:
-
-```powershell
-dotnet ef database update --project "K:\Ta Minh Khiet - Admin\Project\Base\Base\Base.csproj"
-```
-
-Role hợp lệ: admin, user. Đăng ký công khai luôn tạo user, bỏ qua role do client gửi. Admin PUT /api/accounts/{id} có thể gửi thêm role; bỏ qua hoặc gửi null sẽ giữ role hiện tại. PUT /me không cho sửa role.
-
-| Permission | admin | user |
-|---|---|---|
-| users.profile.read | Có | Có |
-| users.profile.update | Có | Có |
-| users.list | Có | Không |
-| users.read | Có | Không |
-| users.update | Có | Không |
-| users.delete | Có | Không |
-
-Permission là danh mục quyền; RolePermission ánh xạ role tới permission. Quyền được đọc từ database mỗi yêu cầu. JWT chứa role nhưng máy chủ cập nhật role từ database khi xác thực, nên token cũ không giữ quyền admin sau khi bị hạ quyền. API cập nhật quản trị yêu cầu cả role admin và permission users.update vì có thể đổi role.
-
-Tài khoản được tạo tự động khi áp dụng InitialCreate:
-
-- Username: admin
-- Password: admin
-- Role: admin
-- FullName: Quản trị viên hệ thống
-- Email: admin@example.com
-- Address: Việt Nam
-- Gender: PreferNotToSay
-- IsActive: true
-- EmailVerified / PhoneVerified: false
-- PhoneNumber, AvatarUrl, DateOfBirth, LastLoginAt: null
-
-Mật khẩu được lưu bằng PasswordHasher của ASP.NET Core Identity. Seed sử dụng hash, Id và thời gian cố định để migration không thay đổi mỗi lần build. Đăng ký công khai vẫn yêu cầu mật khẩu 12–128 ký tự; tài khoản khởi tạo admin/admin được seed trực tiếp. Đăng nhập bằng POST /api/accounts/login:
+Migration tạo sẵn tài khoản quản trị đầu tiên:
 
 ```json
 {
@@ -120,47 +24,179 @@ Mật khẩu được lưu bằng PasswordHasher của ASP.NET Core Identity. Se
 }
 ```
 
-Tên bảng User cần đặt trong dấu ngoặc kép khi viết SQL PostgreSQL. Entity C# vẫn là Account và đường dẫn API vẫn là /api/accounts để giữ tương thích.
+Tài khoản này có role `admin`. Mật khẩu trong database được băm, không được lưu dạng văn bản.
 
-Swagger ẩn bảng phản hồi mẫu khai báo sẵn; sau Execute vẫn hiển thị mã HTTP và body thực tế. API vẫn trả ApiResponse<T> với thông báo đúng trường hợp. OpenAPI giữ schema thành công để các công cụ sinh client sử dụng, không liệt kê sẵn toàn bộ mã lỗi.
-## Upload file
+## Cấu trúc thư mục
 
-POST /api/files/upload, yêu cầu JWT và permission files.upload (admin và user đều được cấp mặc định). Trong Swagger chọn Try it out, chọn File rồi Execute. Request dùng multipart/form-data, không gửi JSON. Mỗi lần một file, tối đa 10 MB; hỗ trợ .jpg, .jpeg, .png, .pdf, .txt. Kiểm tra chữ ký file ảnh/PDF, tên file lưu là GUID do máy chủ tạo. Đây không phải cơ chế quét virus.
-
-File lưu tại Base/wwwroot/uploads; metadata lưu trong UploadedFile gồm người upload, tên gốc, tên lưu, dung lượng, loại nội dung, URL và thời gian UTC. Nếu lưu metadata thất bại, file vừa tạo được dọn. Không đặt khóa ngoại tới User để thông tin người upload vẫn còn khi tài khoản bị xóa.
-
-Response data gồm id, originalName, url, contentType, size (byte), createdAt. Ghép URL tương đối với địa chỉ API để truy cập, ví dụ https://localhost:7015/uploads/<guid>.png. URL file là công khai. PDF/TXT được tải xuống dạng attachment; ảnh có thể hiển thị trực tiếp. Không ghi đè file dựa trên tên client gửi. File không tự động cập nhật AvatarUrl; dùng url trả về để tạo đường dẫn đầy đủ khi cập nhật hồ sơ.
-
-## Nhật ký hệ thống
-
-GET /api/system-logs?pageNumber=1&pageSize=20, yêu cầu role admin và permission system-logs.read.
-Bộ lọc tùy chọn: userId, statusCode, from, to; thời gian dùng ISO 8601 có múi giờ, ví dụ 2026-09-23T00:00:00Z.
-
-Middleware ghi các request /api sau khi xử lý, bao gồm thành công, đăng nhập sai, validation, phân quyền, lỗi máy chủ và upload. Nhật ký lưu UserId (null nếu chưa xác thực), Method, Path, StatusCode, Success, Message, IpAddress, TraceId, DurationMs, CreatedAt. Đăng ký/đăng nhập thành công gắn ID tài khoản tương ứng. Không lưu body request, query string, mật khẩu, token hoặc nội dung file. Dữ liệu response và bản chụp trước/sau được lưu có chọn lọc theo phần Nhật ký chi tiết bên dưới. Không ghi log khởi động ứng dụng. Message ghi thông báo tổng quát theo mã HTTP.
-
-Ghi log dùng scope database riêng, giới hạn chờ 5 giây. Nếu ghi database lỗi, ghi lỗi qua ILogger và không đổi kết quả nghiệp vụ đã trả. Nhật ký là best-effort, chưa có cơ chế lưu bền dự phòng hoặc tự xóa log theo thời gian. Mỗi lần đọc danh sách log cũng phát sinh một log cho lần đọc đó; Swagger và tải file tĩnh không được ghi.
-
-## Cập nhật database cho upload và log
-
-Migration UploadFilesAndSystemLogs bổ sung UploadedFile, SystemLog cùng các permission mới. Nếu database đã áp dụng InitialCreate hiện tại, cập nhật tiếp bằng:
-
-```powershell
-dotnet ef database update --project "K:\Ta Minh Khiet - Admin\Project\Base\Base\Base.csproj"
+```text
+Base/
+├── Authorization/            Role, permission và handler kiểm tra quyền
+├── Common/                   Thành phần dùng chung, audit context, response writer
+├── Controllers/              Các endpoint HTTP
+├── Data/                     DbContext, factory migration, seed dữ liệu
+├── Entities/                 Model ánh xạ bảng database
+├── Exceptions/               Lỗi nghiệp vụ ApiException
+├── Extensions/               Cấu hình API, validation, OpenAPI
+├── Filters/                  Lọc response an toàn cho audit log
+├── Middleware/               Nhật ký request API
+├── Migrations/               Lịch sử thay đổi database
+├── Models/
+│   ├── Requests/             DTO client gửi lên
+│   └── Responses/            DTO API trả về
+├── Repositories/             Truy cập dữ liệu
+│   └── IRepositories/        Interface repository
+├── Services/                 Nghiệp vụ
+│   └── IServices/            Interface service
+└── wwwroot/uploads/          File đã upload
 ```
 
-Nếu database còn dùng bộ migration cũ trước khi tạo lại InitialCreate, cần dùng database mới/trống theo hướng dẫn ở trên. Không xóa database hoặc sửa lịch sử migration tự động.
-## Nhật ký chi tiết
+Request và Response được tách thành từng file. Không trả Entity trực tiếp cho client.
 
-Migration SystemLogDetails bổ sung Action, EntityType, EntityId và ba cột JSONB nullable vào SystemLog:
+## Luồng xử lý
 
-- ResponseData: dữ liệu data của response thành công, gồm hồ sơ tài khoản, danh sách tài khoản (đã phân trang), metadata upload. Đăng nhập chỉ lưu account/expiresAt, loại bỏ accessToken.
-- BeforeData: bản chụp thông tin trước thay đổi hoặc trước khi xóa.
-- AfterData: bản chụp thông tin sau thêm/cập nhật hoặc metadata file đã upload.
+```text
+Client → Controller → IService → Service → IRepository → Repository → AppDbContext → PostgreSQL
+```
 
-Action hiện có: Create, Update, Delete, Login, Upload. EntityType: User hoặc UploadedFile. Các snapshot tài khoản sử dụng UserResponse, tuyệt đối không truyền Account/PasswordHash hoặc request chứa mật khẩu vào AuditContext.
+Ví dụ `PUT /api/accounts/me`:
 
-GET /api/system-logs/{id} trả ApiResponse<SystemLogDetailResponse>, yêu cầu admin và system-logs.read. Các trường responseData, beforeData, afterData được trả thành JSON object, không phải chuỗi JSON escape. Danh sách nhật ký chỉ thêm action/entityType/entityId, không trả các snapshot. Không ghi data của API đọc nhật ký để tránh lặp nhật ký bên trong nhật ký.
+1. JWT kiểm tra token, thời hạn và trạng thái tài khoản.
+2. Permission handler kiểm tra quyền `users.profile.update`.
+3. Controller lấy ID tài khoản từ claim `sub` và gọi service.
+4. Service kiểm tra nghiệp vụ, tạo snapshot trước/sau thay đổi và lưu qua repository.
+5. Controller trả `ApiResponse<UserResponse>`.
+6. Middleware ghi nhật ký request và audit data.
 
-Chỉ phản hồi HTTP 2xx mới lưu dữ liệu chi tiết. Bản ghi cũ trước migration không có snapshot nên các trường này là null. Khi thêm module mới, gọi AuditContext.Begin/Complete với DTO đã loại thông tin nhạy cảm và mở rộng danh sách cho phép trong AuditResponseFilter. Cơ chế lưu log vẫn best-effort, tách transaction nghiệp vụ; không phải audit transactional bảo đảm tuyệt đối khi database ghi log gặp lỗi.
+Controller chỉ xử lý HTTP; Service chứa nghiệp vụ; Repository chỉ truy cập database.
 
-Áp dụng migration mới bằng lệnh database update như trên. Không thay đổi cấu trúc ApiResponse hiện có.
+## Xác thực và phiên đăng nhập
+
+`POST /api/accounts/login` trả access token. Client gửi token cho các API bảo vệ:
+
+```http
+Authorization: Bearer <accessToken>
+```
+
+Access token có thời hạn 30 phút. Mỗi request xác minh token, tài khoản có tồn tại/đang hoạt động và lấy lại role hiện tại từ database. Vì vậy token cũ không giữ quyền sau khi tài khoản bị khóa hoặc bị hạ role.
+
+Hệ thống đã có Entity cho `RefreshToken` và `PasswordResetToken` để triển khai tiếp refresh token, đăng xuất nhiều thiết bị, quên mật khẩu và đặt lại mật khẩu. Các endpoint xác thực nâng cao này chưa được công khai cho đến khi có cơ chế gửi email/SMS hoặc kênh trao token an toàn.
+
+## Role và permission
+
+Role trong bảng `"User"` gồm `admin` và `user`. `Permission` là danh mục quyền; `RolePermission` ánh xạ role với permission.
+
+| Permission | admin | user |
+|---|---:|---:|
+| `users.profile.read`, `users.profile.update` | Có | Có |
+| `users.list`, `users.read`, `users.update`, `users.delete` | Có | Không |
+| `files.upload` | Có | Có |
+| `notifications.read`, `notifications.update` | Có | Có |
+| `system-logs.read`, `roles.manage`, `permissions.manage` | Có | Không |
+| `settings.manage`, `dashboard.read` | Có | Không |
+
+Đăng ký công khai luôn tạo role `user`. Admin có thể đổi role và khóa/mở khóa qua API cập nhật tài khoản.
+
+Khi thêm một permission: thêm hằng số tại `Authorization/AppPermissions.cs`, seed ở `AppDbContext`, tạo policy tại `Program.cs`, rồi gắn `[Authorize(Policy = ...)]` vào endpoint.
+
+## API hiện có
+
+| Method | Endpoint | Mục đích |
+|---|---|---|
+| POST | `/api/accounts/register` | Đăng ký tài khoản user |
+| POST | `/api/accounts/login` | Đăng nhập và nhận JWT |
+| GET / PUT | `/api/accounts/me` | Xem/cập nhật thông tin cá nhân |
+| GET | `/api/accounts` | Admin: danh sách, tìm kiếm, lọc, phân trang |
+| GET / PUT / DELETE | `/api/accounts/{id}` | Admin: xem, cập nhật, xóa tài khoản |
+| POST | `/api/files/upload` | Upload JPG, PNG, PDF, TXT |
+| POST | `/api/accounts/me/avatar` | Upload và gán avatar JPG/PNG/JPEG cho tôi |
+| GET | `/api/files/{id}` | Xem/tải file của tôi; admin xem mọi file |
+| DELETE | `/api/files/{id}` | Xóa file của tôi; admin xóa mọi file |
+| GET | `/api/notifications` | Danh sách thông báo của tôi |
+| GET | `/api/notifications/unread-count` | Số thông báo chưa đọc |
+| PUT | `/api/notifications/{id}/read` | Đánh dấu một thông báo đã đọc |
+| PUT | `/api/notifications/read-all` | Đánh dấu tất cả đã đọc |
+| GET | `/api/dashboard` | Admin: tổng quan người dùng và đăng nhập gần đây |
+| GET | `/api/system-logs` | Admin: danh sách nhật ký |
+| GET | `/api/system-logs/{id}` | Admin: chi tiết nhật ký và audit data |
+
+Danh sách tài khoản hỗ trợ `pageNumber`, `pageSize`, `keyword`, `role`, `isActive`. `pageSize` từ 1 đến 100.
+
+## Phản hồi API
+
+Mọi API nghiệp vụ dùng cùng cấu trúc:
+
+```json
+{
+  "statusCode": 200,
+  "success": true,
+  "message": "Thao tác thành công.",
+  "data": {},
+  "errors": null
+}
+```
+
+Lỗi validation có `errors` theo tên trường và thông báo tiếng Việt. HTTP status luôn trùng `statusCode` trong body. Danh sách dùng `ApiResponse<PagedResult<T>>` với `items`, `pageNumber`, `pageSize`, `totalItems`, `totalPages`.
+
+Swagger ẩn danh sách response mẫu để giao diện gọn. Kết quả thực tế sau khi bấm **Execute** vẫn hiển thị đầy đủ.
+
+## Quản lý file
+
+`POST /api/files/upload` dùng `multipart/form-data`, trường có tên `file`.
+
+- Tối đa 10 MB, mỗi request một file.
+- Chỉ nhận `.jpg`, `.jpeg`, `.png`, `.pdf`, `.txt`.
+- Ảnh/PDF được kiểm tra chữ ký nội dung.
+- File được đổi tên bằng GUID và lưu tại `wwwroot/uploads`.
+- Metadata lưu trong `UploadedFile`; nếu lưu metadata lỗi, file vừa tạo được xóa.
+
+API trả URL tương đối như `/uploads/<guid>.png`. Client dùng URL đó để cập nhật `avatarUrl`. URL file công khai; ảnh hiển thị trực tiếp, PDF/TXT tải xuống. Chưa tích hợp quét virus.
+
+`POST /api/accounts/me/avatar` upload và gán avatar trong một request; chỉ nhận JPG, JPEG, PNG.
+
+## Cấu hình hệ thống
+
+Admin quản lý các cấu hình chung qua `GET /api/system-settings` và `PUT /api/system-settings/{key}`. Key chỉ gồm chữ/số/dấu chấm/gạch dưới/gạch ngang.
+
+Nên dùng các key thống nhất: `system.name`, `system.logoUrl`, `system.faviconUrl`, `organization.name`, `organization.taxCode`, `organization.address`, `organization.phone`, `organization.email`, `organization.website`. Logo và favicon nên upload trước, sau đó lưu URL trả về vào cấu hình.
+
+## Nhật ký hệ thống và audit
+
+Mỗi request `/api` được ghi vào `SystemLog`: người thực hiện, method, path, status code, IP, trace ID, thời gian xử lý và thời điểm.
+
+Với các thao tác thay đổi dữ liệu thành công, log có thêm:
+
+| Trường | Ý nghĩa |
+|---|---|
+| `action` | Create, Update, Delete, Login, Upload |
+| `entityType`, `entityId` | Bản ghi bị tác động |
+| `beforeData` | Snapshot trước khi sửa/xóa |
+| `afterData` | Snapshot sau khi thêm/sửa/upload |
+| `responseData` | Dữ liệu response đã được cho phép ghi log |
+
+Không lưu password, password hash, access token, request body, query string hay nội dung file. Danh sách log trả metadata gọn; gọi `GET /api/system-logs/{id}` để xem snapshot chi tiết.
+
+Ghi log dùng scope database riêng. Nếu ghi log thất bại, nghiệp vụ chính không bị thất bại theo.
+
+## Database và migration
+
+Giữ toàn bộ migration trong source control và áp dụng theo thứ tự. Khi thay đổi Entity hoặc mapping:
+
+```powershell
+dotnet ef migrations add TenMigration --project Base/Base.csproj
+dotnet ef database update --project Base/Base.csproj
+```
+
+Không sửa/xóa migration đã áp dụng ở môi trường dùng chung. Để làm lại dữ liệu phát triển, sử dụng database trống.
+
+## Phần nền đã chuẩn bị để phát triển tiếp
+
+Danh sách yêu cầu đã có phần nền database/permission nhưng chưa có endpoint nghiệp vụ hoàn chỉnh:
+
+- Refresh token, thu hồi phiên, đăng xuất một/tất cả thiết bị.
+- Quên mật khẩu, đặt lại mật khẩu, đổi mật khẩu; cần tích hợp email/SMS trước khi phát hành.
+- CRUD role/permission, gán permission theo role.
+- Admin tạo tài khoản riêng và cấu hình hệ thống.
+- Gửi thông báo từ nghiệp vụ/admin; hiện API mới quản lý thông báo đã có.
+- Xem/tải/xóa file riêng theo quyền; hiện đã có upload và static URL công khai.
+
+Khi triển khai các phần này, giữ đúng luồng Controller → Service → Repository → DbContext, tạo DTO riêng và bổ sung audit snapshot an toàn.

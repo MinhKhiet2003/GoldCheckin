@@ -1,5 +1,6 @@
 using Base.Data;
 using Base.Entities;
+using Base.Models.Requests;
 using Base.Repositories.IRepositories;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,15 +26,35 @@ public class AccountRepository(AppDbContext dbContext) : IAccountRepository
             cancellationToken);
     }
 
-    public async Task<(List<Account> Items, int Total)> ListAsync(int pageNumber, int pageSize, CancellationToken cancellationToken)
+    public async Task<(List<Account> Items, int Total)> ListAsync(AccountQueryRequest request, CancellationToken cancellationToken)
     {
-        var total = await dbContext.Accounts.CountAsync(cancellationToken);
-        var items = await dbContext.Accounts
+        var query = dbContext.Accounts.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(request.Keyword))
+        {
+            var keyword = request.Keyword.Trim().ToLower();
+            query = query.Where(item => item.Username.Contains(keyword)
+                || item.FullName.ToLower().Contains(keyword)
+                || item.Email.Contains(keyword));
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Role))
+        {
+            query = query.Where(item => item.Role == request.Role);
+        }
+
+        if (request.IsActive.HasValue)
+        {
+            query = query.Where(item => item.IsActive == request.IsActive.Value);
+        }
+
+        var total = await query.CountAsync(cancellationToken);
+        var items = await query
             .AsNoTracking()
             .OrderByDescending(account => account.CreatedAt)
             .ThenBy(account => account.Id)
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
+            .Skip((request.PageNumber - 1) * request.PageSize)
+            .Take(request.PageSize)
             .ToListAsync(cancellationToken);
 
         return (items, total);
