@@ -5,6 +5,7 @@ using Base.Services;
 using Base.Services.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http.Metadata;
 
 namespace Base.Controllers;
 
@@ -17,6 +18,7 @@ public class FilesController(IFileService service) : ControllerBase
     private Guid CurrentUserId => Guid.Parse(User.FindFirst("sub")!.Value);
 
     [HttpPost("upload")]
+    [EndpointSummary("Tải file lên hệ thống")]
     [Consumes("multipart/form-data")]
     [RequestSizeLimit(FileService.MaxFileSize + 65536)]
     [RequestFormLimits(MultipartBodyLengthLimit = FileService.MaxFileSize + 65536)]
@@ -36,6 +38,7 @@ public class FilesController(IFileService service) : ControllerBase
     }
 
     [Authorize(Policy = AppPermissions.ReadFiles)]
+    [EndpointSummary("Xem hoặc tải file")]
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> View(Guid id, [FromQuery] bool download, CancellationToken cancellationToken)
     {
@@ -50,6 +53,7 @@ public class FilesController(IFileService service) : ControllerBase
     }
 
     [Authorize(Policy = AppPermissions.DeleteFiles)]
+    [EndpointSummary("Xóa file")]
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult<ApiResponse<object>>> Delete(Guid id, CancellationToken cancellationToken)
     {

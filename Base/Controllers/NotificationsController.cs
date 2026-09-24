@@ -4,6 +4,7 @@ using Base.Models.Responses;
 using Base.Services.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http.Metadata;
 
 namespace Base.Controllers;
 
@@ -16,6 +17,7 @@ public class NotificationsController(INotificationService service) : ControllerB
     private Guid CurrentUserId => Guid.Parse(User.FindFirst("sub")!.Value);
 
     [HttpGet]
+    [EndpointSummary("Lấy danh sách thông báo")]
     public async Task<ActionResult<ApiResponse<PagedResult<NotificationResponse>>>> List(
         [FromQuery] NotificationQueryRequest request,
         CancellationToken cancellationToken)
@@ -31,6 +33,7 @@ public class NotificationsController(INotificationService service) : ControllerB
     }
 
     [HttpGet("unread-count")]
+    [EndpointSummary("Lấy số thông báo chưa đọc")]
     public async Task<ActionResult<ApiResponse<object>>> UnreadCount(CancellationToken cancellationToken)
     {
         var count = await service.CountUnreadAsync(CurrentUserId, cancellationToken);
@@ -44,6 +47,7 @@ public class NotificationsController(INotificationService service) : ControllerB
     }
 
     [Authorize(Policy = AppPermissions.UpdateNotifications)]
+    [EndpointSummary("Đánh dấu thông báo đã đọc")]
     [HttpPut("{id:guid}/read")]
     public async Task<ActionResult<ApiResponse<object>>> MarkRead(Guid id, CancellationToken cancellationToken)
     {
@@ -52,6 +56,7 @@ public class NotificationsController(INotificationService service) : ControllerB
     }
 
     [Authorize(Policy = AppPermissions.UpdateNotifications)]
+    [EndpointSummary("Đánh dấu tất cả thông báo đã đọc")]
     [HttpPut("read-all")]
     public async Task<ActionResult<ApiResponse<object>>> MarkAllRead(CancellationToken cancellationToken)
     {

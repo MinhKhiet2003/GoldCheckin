@@ -3,6 +3,7 @@ using Base.Models.Responses;
 using Base.Services.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http.Metadata;
 
 namespace Base.Controllers;
 
@@ -13,6 +14,7 @@ namespace Base.Controllers;
 public class DashboardController(IDashboardService service) : ControllerBase
 {
     [HttpGet]
+    [EndpointSummary("Lấy dữ liệu tổng quan dashboard")]
     public async Task<ActionResult<ApiResponse<DashboardResponse>>> Get(CancellationToken cancellationToken)
     {
         var result = await service.GetAsync(cancellationToken);

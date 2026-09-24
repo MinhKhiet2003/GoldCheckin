@@ -4,6 +4,7 @@ using Base.Services.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Http.Metadata;
 
 namespace Base.Controllers;
 
@@ -16,6 +17,7 @@ public class AuthenticationController(IAuthService service, IWebHostEnvironment 
 
     [AllowAnonymous]
     [EnableRateLimiting("auth")]
+    [EndpointSummary("Làm mới access token và refresh token")]
     [HttpPost("refresh")]
     public async Task<ActionResult<ApiResponse<LoginResponse>>> Refresh(RefreshTokenRequest request, CancellationToken cancellationToken)
     {
@@ -25,6 +27,7 @@ public class AuthenticationController(IAuthService service, IWebHostEnvironment 
 
     [AllowAnonymous]
     [EnableRateLimiting("auth")]
+    [EndpointSummary("Gửi yêu cầu quên mật khẩu")]
     [HttpPost("forgot-password")]
     public async Task<ActionResult<ApiResponse<ForgotPasswordResponse>>> ForgotPassword(ForgotPasswordRequest request, CancellationToken cancellationToken)
     {
@@ -40,6 +43,7 @@ public class AuthenticationController(IAuthService service, IWebHostEnvironment 
 
     [AllowAnonymous]
     [EnableRateLimiting("auth")]
+    [EndpointSummary("Đặt lại mật khẩu bằng token")]
     [HttpPost("reset-password")]
     public async Task<ActionResult<ApiResponse<object>>> ResetPassword(ResetPasswordRequest request, CancellationToken cancellationToken)
     {
@@ -48,6 +52,7 @@ public class AuthenticationController(IAuthService service, IWebHostEnvironment 
     }
 
     [Authorize]
+    [EndpointSummary("Đăng xuất thiết bị hiện tại")]
     [HttpPost("logout")]
     public async Task<ActionResult<ApiResponse<object>>> Logout(LogoutRequest request, CancellationToken cancellationToken)
     {
@@ -56,6 +61,7 @@ public class AuthenticationController(IAuthService service, IWebHostEnvironment 
     }
 
     [Authorize]
+    [EndpointSummary("Đăng xuất tất cả thiết bị")]
     [HttpPost("logout-all")]
     public async Task<ActionResult<ApiResponse<object>>> LogoutAll(CancellationToken cancellationToken)
     {
@@ -64,6 +70,7 @@ public class AuthenticationController(IAuthService service, IWebHostEnvironment 
     }
 
     [Authorize]
+    [EndpointSummary("Đổi mật khẩu")]
     [HttpPost("change-password")]
     public async Task<ActionResult<ApiResponse<object>>> ChangePassword(ChangePasswordRequest request, CancellationToken cancellationToken)
     {

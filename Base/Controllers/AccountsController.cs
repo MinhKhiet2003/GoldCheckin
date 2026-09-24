@@ -6,6 +6,7 @@ using Base.Services.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Http.Metadata;
 
 namespace Base.Controllers;
 
@@ -24,6 +25,7 @@ public class AccountsController(IAccountService accountService) : ControllerBase
     }
 
     [AllowAnonymous]
+    [EndpointSummary("Đăng ký tài khoản mới")]
     [HttpPost("register")]
     [EnableRateLimiting("auth")]
     [ProducesResponseType<ApiResponse<UserResponse>>(StatusCodes.Status201Created)]
@@ -44,6 +46,7 @@ public class AccountsController(IAccountService accountService) : ControllerBase
     }
 
     [AllowAnonymous]
+    [EndpointSummary("Đăng nhập và nhận token")]
     [HttpPost("login")]
     [EnableRateLimiting("auth")]
     public async Task<ActionResult<ApiResponse<LoginResponse>>> Login(
@@ -67,6 +70,7 @@ public class AccountsController(IAccountService accountService) : ControllerBase
     }
 
     [Authorize(Policy = AppPermissions.ReadOwnProfile)]
+    [EndpointSummary("Xem thông tin cá nhân")]
     [HttpGet("me")]
     public async Task<ActionResult<ApiResponse<UserResponse>>> Me(CancellationToken cancellationToken)
     {
@@ -82,6 +86,7 @@ public class AccountsController(IAccountService accountService) : ControllerBase
     }
 
     [Authorize(Policy = AppPermissions.UpdateOwnProfile)]
+    [EndpointSummary("Cập nhật thông tin cá nhân")]
     [HttpPut("me")]
     public async Task<ActionResult<ApiResponse<UserResponse>>> UpdateMe(
         ProfileRequest request,
@@ -99,6 +104,7 @@ public class AccountsController(IAccountService accountService) : ControllerBase
     }
 
     [Authorize(Policy = AppPermissions.UpdateOwnProfile)]
+    [EndpointSummary("Tải và cập nhật ảnh đại diện")]
     [HttpPost("me/avatar")]
     [Consumes("multipart/form-data")]
     [RequestSizeLimit(FileService.MaxFileSize + 65536)]
@@ -125,6 +131,7 @@ public class AccountsController(IAccountService accountService) : ControllerBase
     }
 
     [Authorize(Policy = AppPermissions.ListUsers)]
+    [EndpointSummary("Lấy danh sách tài khoản")]
     [HttpGet]
     public async Task<ActionResult<ApiResponse<PagedResult<UserResponse>>>> List(
         [FromQuery] AccountQueryRequest request,
@@ -142,6 +149,7 @@ public class AccountsController(IAccountService accountService) : ControllerBase
     }
 
     [Authorize(Policy = AppPermissions.ReadUser)]
+    [EndpointSummary("Xem chi tiết tài khoản")]
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ApiResponse<UserResponse>>> Get(Guid id, CancellationToken cancellationToken)
     {
@@ -158,6 +166,7 @@ public class AccountsController(IAccountService accountService) : ControllerBase
 
     [Authorize(Roles = AppRoles.Admin)]
     [Authorize(Policy = AppPermissions.UpdateUser)]
+    [EndpointSummary("Cập nhật tài khoản bởi quản trị viên")]
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ApiResponse<UserResponse>>> Update(
         Guid id,
@@ -176,6 +185,7 @@ public class AccountsController(IAccountService accountService) : ControllerBase
     }
 
     [Authorize(Policy = AppPermissions.DeleteUser)]
+    [EndpointSummary("Xóa tài khoản")]
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult<ApiResponse<object>>> Delete(Guid id, CancellationToken cancellationToken)
     {
@@ -191,6 +201,7 @@ public class AccountsController(IAccountService accountService) : ControllerBase
 
     [Authorize(Roles = AppRoles.Admin)]
     [Authorize(Policy = AppPermissions.ManageRoles)]
+    [EndpointSummary("Gán vai trò cho tài khoản")]
     [HttpPut("{id:guid}/role")]
     public async Task<ActionResult<ApiResponse<UserResponse>>> AssignRole(
         Guid id,

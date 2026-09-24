@@ -4,6 +4,7 @@ using Base.Models.Responses;
 using Base.Services.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http.Metadata;
 
 namespace Base.Controllers;
 
@@ -15,6 +16,7 @@ namespace Base.Controllers;
 public class SystemLogsController(ISystemLogService service) : ControllerBase
 {
     [HttpGet("{id:guid}")]
+    [EndpointSummary("Xem chi tiết nhật ký hệ thống")]
     public async Task<ActionResult<ApiResponse<SystemLogDetailResponse>>> Get(Guid id, CancellationToken cancellationToken)
     {
         var result = await service.GetAsync(id, cancellationToken);
@@ -28,6 +30,7 @@ public class SystemLogsController(ISystemLogService service) : ControllerBase
         });
     }
     [HttpGet]
+    [EndpointSummary("Lấy danh sách nhật ký hệ thống")]
     public async Task<ActionResult<ApiResponse<PagedResult<SystemLogResponse>>>> List(
         [FromQuery] SystemLogQueryRequest request,
         CancellationToken cancellationToken)

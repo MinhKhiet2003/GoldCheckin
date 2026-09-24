@@ -4,6 +4,7 @@ using Base.Models.Responses;
 using Base.Services.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http.Metadata;
 
 namespace Base.Controllers;
 
@@ -14,6 +15,7 @@ namespace Base.Controllers;
 public class RolesController(IRolePermissionService service) : ControllerBase
 {
     [Authorize(Policy = AppPermissions.ManagePermissions)]
+    [EndpointSummary("Lấy danh sách quyền")]
     [HttpGet("permissions")]
     public async Task<ActionResult<ApiResponse<IEnumerable<PermissionResponse>>>> ListPermissions(CancellationToken cancellationToken)
     {
@@ -22,6 +24,7 @@ public class RolesController(IRolePermissionService service) : ControllerBase
     }
 
     [Authorize(Policy = AppPermissions.ManageRoles)]
+    [EndpointSummary("Lấy danh sách vai trò và quyền")]
     [HttpGet("roles")]
     public async Task<ActionResult<ApiResponse<IEnumerable<RoleResponse>>>> ListRoles(CancellationToken cancellationToken)
     {
@@ -30,6 +33,7 @@ public class RolesController(IRolePermissionService service) : ControllerBase
     }
 
     [Authorize(Policy = AppPermissions.ManageRoles)]
+    [EndpointSummary("Cập nhật quyền cho role user")]
     [HttpPut("roles/user/permissions")]
     public async Task<ActionResult<ApiResponse<RoleResponse>>> UpdateUserPermissions(RolePermissionRequest request, CancellationToken cancellationToken)
     {
