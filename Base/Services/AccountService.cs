@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace Base.Services;
 
-public class AccountService(
+public partial class AccountService(
     IAccountRepository repository,
     IPasswordHasher<Account> passwordHasher,
     IAuthService authService,

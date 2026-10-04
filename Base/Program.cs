@@ -23,6 +23,7 @@ using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddMemoryCache();
 var webRoot = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
 Directory.CreateDirectory(Path.Combine(webRoot, "uploads"));
 builder.Environment.WebRootPath = webRoot;

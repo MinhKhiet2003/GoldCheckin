@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Caching.Memory;
 using Base.Authorization;
 using Base.Models.Requests;
 using Base.Models.Responses;
@@ -14,8 +15,53 @@ namespace Base.Controllers;
 [Route("api/accounts")]
 [Produces("application/json")]
 [Authorize]
-public class AccountsController(IAccountService accountService) : ControllerBase
+public class AccountsController(IAccountService accountService, IMemoryCache cache) : ControllerBase
 {
+    [Authorize(Roles = AppRoles.Admin)]
+    [EndpointSummary("Nhập tài khoản từ Excel")]
+    [HttpPost("import")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(AccountService.MaxImportFileSize + 65536)]
+    public async Task<ActionResult<ApiResponse<AccountImportResponse>>> Import(
+        [FromForm] UploadFileRequest request, CancellationToken cancellationToken)
+    {
+        var result = await accountService.ImportAsync(request.File, cancellationToken);
+        if (result.DuplicateCount > 0)
+        {
+            var reportId = Guid.NewGuid();
+            cache.Set($"account-import:{reportId}", result.Duplicates.ToArray(), TimeSpan.FromMinutes(30));
+            result.DuplicateDownloadUrl = Url.Action(nameof(DownloadImportDuplicates), new { reportId });
+        }
+        return Ok(new ApiResponse<AccountImportResponse>
+        {
+            StatusCode = 200,
+            Success = true,
+            Message = $"Đã thêm {result.ImportedCount} tài khoản; bỏ qua {result.DuplicateCount} tài khoản đã có/trùng; {result.InvalidCount} dòng không hợp lệ.",
+            Data = result
+        });
+    }
+
+    [Authorize(Roles = AppRoles.Admin)]
+    [EndpointSummary("Tải file Excel mẫu nhập tài khoản")]
+    [HttpGet("import/template")]
+    [Produces("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]
+    public IActionResult ImportTemplate() => File(
+        AccountService.CreateImportTemplate(),
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "accounts-template.xlsx");
+
+    [Authorize(Roles = AppRoles.Admin)]
+    [EndpointSummary("Tải danh sách tài khoản bị trùng sau import (hiệu lực 30 phút)")]
+    [HttpGet("import/duplicates/{reportId:guid}")]
+    [Produces("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]
+    public IActionResult DownloadImportDuplicates(Guid reportId)
+    {
+        if (!cache.TryGetValue<AccountImportDuplicate[]>($"account-import:{reportId}", out var duplicates) || duplicates is null)
+            throw new Base.Exceptions.ApiException(404, "Danh sách trùng không tồn tại hoặc đã hết hạn. Vui lòng import lại.");
+        return File(AccountService.CreateDuplicateReport(duplicates),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "accounts-duplicates.xlsx");
+    }
+
     private Guid CurrentId
     {
         get

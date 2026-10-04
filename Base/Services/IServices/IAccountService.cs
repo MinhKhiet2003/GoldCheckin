@@ -5,6 +5,7 @@ namespace Base.Services.IServices;
 
 public interface IAccountService
 {
+    Task<AccountImportResponse> ImportAsync(IFormFile file, CancellationToken cancellationToken);
     Task<UserResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken);
     Task<LoginResponse> LoginAsync(LoginRequest request, string? deviceName, string? ipAddress, CancellationToken cancellationToken);
     Task<UserResponse> GetAsync(Guid id, CancellationToken cancellationToken);

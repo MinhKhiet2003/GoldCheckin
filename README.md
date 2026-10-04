@@ -242,3 +242,29 @@ Danh sách yêu cầu đã có phần nền database/permission nhưng chưa có
 - Xem/tải/xóa file riêng theo quyền; hiện đã có upload và static URL công khai.
 
 Khi triển khai các phần này, giữ đúng luồng Controller → Service → Repository → DbContext, tạo DTO riêng và bổ sung audit snapshot an toàn.
+
+## Nhập tài khoản từ Excel
+
+Admin đăng nhập rồi gọi GET /api/accounts/import/template để tải mẫu .xlsx.
+Điền dữ liệu ở sheet đầu tiên, dòng 1 là tên cột. POST /api/accounts/import
+dùng multipart/form-data, trường file, kèm Bearer token admin.
+
+Cột bắt buộc: Username, Password, FullName, Email.
+Cột tùy chọn: PhoneNumber, DateOfBirth, Gender, Address.
+Password có 12–128 ký tự. DateOfBirth dùng yyyy-MM-dd hoặc ô ngày Excel.
+Gender: Male, Female, Other, PreferNotToSay. Định dạng PhoneNumber là Text
+để giữ số 0 đầu. Mỗi file tối đa 5 MB và 1.000 dòng, không chứa công thức.
+
+Chỉ tạo tài khoản mới, role user và đang hoạt động. Không cập nhật tài khoản cũ.
+Dòng sai dữ liệu hoặc trùng username/email bị bỏ qua; các dòng hợp lệ được lưu
+trong một lần SaveChanges. Response trả totalRows, importedCount, failedCount,
+errors (row là số dòng Excel, message là lý do). Không trả mật khẩu.
+Không cần migration mới.
+
+Import bỏ qua dòng trùng username, email hoặc PhoneNumber trong database hoặc các
+dòng hợp lệ trước đó trong file. Username/email so sánh không phân biệt hoa thường;
+số điện thoại bỏ khoảng trắng, dấu +, -, ., ngoặc. Số điện thoại trống không tính trùng.
+Response: importedCount (đã thêm), duplicateCount (trùng), invalidCount (sai dữ liệu).
+duplicates chứa danh sách trùng và lý do. duplicateDownloadUrl dùng GET với Bearer
+token admin để tải Excel danh sách trùng, không có mật khẩu; hiệu lực 30 phút,
+hết hạn khi khởi động lại server. Khi có nhiều instance, dùng cùng instance để tải.

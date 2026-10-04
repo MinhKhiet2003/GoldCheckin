@@ -23,6 +23,16 @@ public class AccountRepository(AppDbContext dbContext) : IAccountRepository
         return dbContext.Accounts.SingleOrDefaultAsync(account => account.Email == email, cancellationToken);
     }
 
+    public Task<bool> ExistsForImportAsync(string username, string email, string? phoneNumber, CancellationToken cancellationToken)
+    {
+        return dbContext.Accounts.AnyAsync(account =>
+            account.Username.ToLower() == username || account.Email.ToLower() == email ||
+            (phoneNumber != null && account.PhoneNumber != null &&
+             account.PhoneNumber.Replace(" ", "").Replace("-", "").Replace(".", "")
+                .Replace("(", "").Replace(")", "").Replace("+", "") == phoneNumber),
+            cancellationToken);
+    }
+
     public Task<bool> ExistsAsync(string username, string email, Guid? exceptId, CancellationToken cancellationToken)
     {
         return dbContext.Accounts.AnyAsync(
