@@ -7,6 +7,7 @@
 
 # User-specific project settings
 *.csproj.user
+appsettings.Development.json
 
 # User-uploaded runtime files; keep the placeholder rule
 Base/wwwroot/uploads/*

@@ -8,9 +8,16 @@ namespace Base.Repositories;
 
 public class NotificationRepository(AppDbContext dbContext) : INotificationRepository
 {
+    private static IQueryable<Notification> RequestNotifications(IQueryable<Notification> query) => query.Where(item =>
+        item.Title == "Có yêu cầu cần xử lý"
+        || item.Title == "Đơn của bạn đã được duyệt"
+        || item.Title == "Đơn của bạn bị từ chối"
+        || (item.Title == "Đơn của bạn đã được cập nhật"
+            && (item.Content.EndsWith(": approved") || item.Content.EndsWith(": rejected"))));
+
     public async Task<(List<Notification> Items, int Total)> ListAsync(Guid userId, NotificationQueryRequest request, CancellationToken cancellationToken)
     {
-        var query = dbContext.Notifications.AsNoTracking().Where(item => item.UserId == userId);
+        var query = RequestNotifications(dbContext.Notifications.AsNoTracking().Where(item => item.UserId == userId));
 
         if (request.IsRead.HasValue)
         {
@@ -30,7 +37,7 @@ public class NotificationRepository(AppDbContext dbContext) : INotificationRepos
 
     public Task<int> CountUnreadAsync(Guid userId, CancellationToken cancellationToken)
     {
-        return dbContext.Notifications.CountAsync(item => item.UserId == userId && item.ReadAt == null, cancellationToken);
+        return RequestNotifications(dbContext.Notifications.Where(item => item.UserId == userId && item.ReadAt == null)).CountAsync(cancellationToken);
     }
 
     public Task<Notification?> GetAsync(Guid id, Guid userId, CancellationToken cancellationToken)

@@ -17,7 +17,6 @@ public class ProfileRequest : IValidatableObject
     [StringLength(20, ErrorMessage = "Số điện thoại không được vượt quá 20 ký tự.")]
     public string? PhoneNumber { get; set; }
 
-    [Url(ErrorMessage = "Đường dẫn ảnh đại diện không hợp lệ.")]
     [StringLength(2048, ErrorMessage = "Đường dẫn ảnh đại diện không được vượt quá 2048 ký tự.")]
     public string? AvatarUrl { get; set; }
 
@@ -40,13 +39,16 @@ public class ProfileRequest : IValidatableObject
 
         if (AvatarUrl is not null)
         {
-            var validUrl = Uri.TryCreate(AvatarUrl, UriKind.Absolute, out var uri)
-                && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+            var validUrl = AvatarUrl.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase)
+                || AvatarUrl.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase)
+                || AvatarUrl.StartsWith("/api/accounts/me/avatar/", StringComparison.OrdinalIgnoreCase)
+                || (Uri.TryCreate(AvatarUrl, UriKind.Absolute, out var uri)
+                    && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps));
 
             if (!validUrl)
             {
                 yield return new ValidationResult(
-                    "Đường dẫn ảnh đại diện phải sử dụng HTTP hoặc HTTPS.",
+                "Đường dẫn ảnh đại diện không hợp lệ.",
                     [nameof(AvatarUrl)]);
             }
         }

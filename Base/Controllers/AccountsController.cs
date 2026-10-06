@@ -104,6 +104,15 @@ public class AccountsController(IAccountService accountService, IMemoryCache cac
             Request.Headers.UserAgent.ToString(),
             HttpContext.Connection.RemoteIpAddress?.ToString(),
             cancellationToken);
+        if (login is null)
+        {
+            return Unauthorized(new ApiResponse<LoginResponse>
+            {
+                StatusCode = StatusCodes.Status401Unauthorized,
+                Success = false,
+                Message = "Tên đăng nhập hoặc mật khẩu không đúng, hoặc tài khoản đã bị khóa."
+            });
+        }
         HttpContext.Items["AuthenticatedUserId"] = login.Account.Id;
 
         return Ok(new ApiResponse<LoginResponse>
@@ -129,6 +138,17 @@ public class AccountsController(IAccountService accountService, IMemoryCache cac
             Message = "Lấy thông tin tài khoản thành công.",
             Data = account
         });
+    }
+
+    [HttpGet("me/avatar/{id:guid}")]
+    public async Task<IActionResult> Avatar(Guid id, [FromServices] IFileService fileService, CancellationToken cancellationToken)
+    {
+        var file = await fileService.GetAsync(id, CurrentId, false, cancellationToken);
+        var path = Path.Combine(HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().WebRootPath, "uploads", file.StoredName);
+        if (!System.IO.File.Exists(path)) return NotFound();
+        Response.Headers["Cache-Control"] = "private, max-age=300";
+        Response.Headers["X-Content-Type-Options"] = "nosniff";
+        return PhysicalFile(path, file.ContentType);
     }
 
     [Authorize(Policy = AppPermissions.UpdateOwnProfile)]
@@ -166,7 +186,7 @@ public class AccountsController(IAccountService accountService, IMemoryCache cac
         }
 
         var file = await fileService.UploadAsync(request.File, CurrentId, cancellationToken);
-        var account = await accountService.UpdateAvatarAsync(CurrentId, file.Url, cancellationToken);
+        var account = await accountService.UpdateAvatarAsync(CurrentId, $"/api/accounts/me/avatar/{file.Id}", cancellationToken);
         return Ok(new ApiResponse<UserResponse>
         {
             StatusCode = 200,

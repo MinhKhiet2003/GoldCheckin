@@ -41,6 +41,13 @@ public class AccountRepository(AppDbContext dbContext) : IAccountRepository
             cancellationToken);
     }
 
+    public Task<bool> PhoneExistsAsync(string phoneNumber, Guid exceptId, CancellationToken cancellationToken)
+    {
+        var normalized = phoneNumber.Replace(" ", "").Replace("-", "").Replace(".", "").Replace("(", "").Replace(")", "").Replace("+", "");
+        return dbContext.Accounts.AnyAsync(account => account.Id != exceptId && account.PhoneNumber != null
+            && account.PhoneNumber.Replace(" ", "").Replace("-", "").Replace(".", "").Replace("(", "").Replace(")", "").Replace("+", "") == normalized, cancellationToken);
+    }
+
     public async Task<(List<Account> Items, int Total)> ListAsync(AccountQueryRequest request, CancellationToken cancellationToken)
     {
         var query = dbContext.Accounts.AsNoTracking();

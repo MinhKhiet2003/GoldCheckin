@@ -1,4 +1,5 @@
 using Base.Data;
+using Base.Common;
 using Base.Entities;
 using Base.Models.Requests;
 using Base.Repositories.IRepositories;
@@ -10,7 +11,8 @@ public class SystemLogRepository(AppDbContext dbContext) : ISystemLogRepository
 {
     public Task<SystemLog?> GetAsync(Guid id, CancellationToken cancellationToken)
     {
-        return dbContext.SystemLogs.AsNoTracking().SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+        return dbContext.SystemLogs.AsNoTracking().SingleOrDefaultAsync(item =>
+            item.Id == id && item.Action != null && SystemLogActions.DataChanges.Contains(item.Action), cancellationToken);
     }
 
     public async Task AddAsync(SystemLog log, CancellationToken cancellationToken)
@@ -21,7 +23,8 @@ public class SystemLogRepository(AppDbContext dbContext) : ISystemLogRepository
 
     public async Task<(List<SystemLog> Items, int Total)> ListAsync(SystemLogQueryRequest request, CancellationToken cancellationToken)
     {
-        var query = dbContext.SystemLogs.AsNoTracking();
+        var query = dbContext.SystemLogs.AsNoTracking().Where(item =>
+            item.Action != null && SystemLogActions.DataChanges.Contains(item.Action));
 
         if (request.UserId.HasValue)
         {

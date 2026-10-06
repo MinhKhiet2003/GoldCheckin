@@ -32,6 +32,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        Base.Gold.GoldModel.Configure(modelBuilder);
         var account = modelBuilder.Entity<Account>();
 
         account.ToTable("User", table =>

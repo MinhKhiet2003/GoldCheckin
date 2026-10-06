@@ -8,22 +8,24 @@ using Base.Common;
 using Base.Configuration;
 using Base.Data;
 using Base.Entities;
-using Base.Exceptions;
 using Base.Extensions;
 using Base.Repositories;
 using Base.Repositories.IRepositories;
 using Base.Services;
 using Base.Services.IServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddMemoryCache();
+builder.Services.AddScoped<Base.Gold.IGoldRepository, Base.Gold.GoldRepository>();
+builder.Services.AddScoped<Base.Gold.GoldService>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddHttpClient<Base.Gold.IFaceVerifier, Base.Gold.FaceVerifier>(client => client.Timeout = TimeSpan.FromSeconds(15));
+builder.Services.AddHttpClient<Base.Gold.IFaceEnrollment, Base.Gold.FaceEnrollment>(client => client.Timeout = TimeSpan.FromSeconds(15));
 var webRoot = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
 Directory.CreateDirectory(Path.Combine(webRoot, "uploads"));
 builder.Environment.WebRootPath = webRoot;
@@ -89,7 +91,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
         options.Events = new JwtBearerEvents
         {
-            OnTokenValidated = async context =>
+            OnTokenValidated = context => JwtValidationGuard.Run(context, async () =>
             {
                 if (!Guid.TryParse(context.Principal?.FindFirst("sub")?.Value, out var id))
                 {
@@ -129,10 +131,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
                     identity.AddClaim(new Claim("role", account.Role));
                 }
-            },
+            }),
             OnChallenge = async context =>
             {
                 context.HandleResponse();
+                if (context.HttpContext.RequestAborted.IsCancellationRequested)
+                {
+                    context.Response.StatusCode = 499;
+                    return;
+                }
                 context.Response.Headers.WWWAuthenticate = "Bearer";
                 await ApiResponseWriter.WriteErrorAsync(context.HttpContext, StatusCodes.Status401Unauthorized);
             },
@@ -196,39 +203,7 @@ var app = builder.Build();
 
 app.UseMiddleware<SystemLogMiddleware>();
 
-app.UseExceptionHandler(new ExceptionHandlerOptions
-{
-    AllowStatusCode404Response = true,
-    ExceptionHandler = async context =>
-    {
-        var error = context.Features.Get<IExceptionHandlerFeature>()?.Error;
-        var statusCode = StatusCodes.Status500InternalServerError;
-        string? message = null;
-
-        if (error is ApiException apiException)
-        {
-            statusCode = apiException.StatusCode;
-            message = apiException.Message;
-        }
-        else if (error is BadHttpRequestException badRequest)
-        {
-            statusCode = badRequest.StatusCode;
-        }
-        else if (error is DbUpdateException
-        {
-            InnerException: PostgresException
-            {
-                SqlState: PostgresErrorCodes.UniqueViolation
-            }
-        })
-        {
-            statusCode = StatusCodes.Status409Conflict;
-            message = "Tên đăng nhập hoặc email đã được sử dụng.";
-        }
-
-        await ApiResponseWriter.WriteErrorAsync(context, statusCode, message);
-    }
-});
+app.UseMiddleware<ApiExceptionMiddleware>();
 app.UseStatusCodePages(async statusContext =>
 {
     var context = statusContext.HttpContext;
@@ -252,6 +227,18 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+// Leave certificates and attendance evidence must only be fetched through authorized API routes.
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/uploads"))
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+    await next(context);
+});
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(Path.Combine(webRoot, "uploads")),
@@ -274,4 +261,14 @@ app.UseCors("frontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-app.Run();
+// Capture before RunAsync disposes the host, so normal cancellation during shutdown
+// does not try to access an already disposed IServiceProvider.
+var shutdownToken = app.Lifetime.ApplicationStopping;
+try
+{
+    await app.RunAsync();
+}
+catch (OperationCanceledException) when (shutdownToken.IsCancellationRequested)
+{
+    // Expected host shutdown; unrelated startup/runtime errors still propagate.
+}

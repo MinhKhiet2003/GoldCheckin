@@ -44,21 +44,21 @@ public partial class AccountService(
         return UserResponse.From(account);
     }
 
-    public async Task<LoginResponse> LoginAsync(LoginRequest request, string? deviceName, string? ipAddress, CancellationToken cancellationToken)
+    public async Task<LoginResponse?> LoginAsync(LoginRequest request, string? deviceName, string? ipAddress, CancellationToken cancellationToken)
     {
         var username = request.Username.Trim().ToLowerInvariant();
         var account = await repository.FindByUsernameAsync(username, cancellationToken);
 
         if (account is null || !account.IsActive)
         {
-            throw new ApiException(401, "Tên đăng nhập hoặc mật khẩu không đúng, hoặc tài khoản đã bị khóa.");
+            return null;
         }
 
         var verificationResult = passwordHasher.VerifyHashedPassword(account, account.PasswordHash, request.Password);
 
         if (verificationResult == PasswordVerificationResult.Failed)
         {
-            throw new ApiException(401, "Tên đăng nhập hoặc mật khẩu không đúng, hoặc tài khoản đã bị khóa.");
+            return null;
         }
 
         if (verificationResult == PasswordVerificationResult.SuccessRehashNeeded)
@@ -198,6 +198,11 @@ public partial class AccountService(
         {
             throw new ApiException(409, "Email đã được sử dụng.");
         }
+        var phone = string.IsNullOrWhiteSpace(request.PhoneNumber) ? null : request.PhoneNumber.Trim();
+        if (phone is not null && await repository.PhoneExistsAsync(phone, account.Id, cancellationToken))
+        {
+            throw new ApiException(409, "Số điện thoại đã được sử dụng.");
+        }
 
         audit.Begin("Update", "User", account.Id, UserResponse.From(account));
         ApplyProfile(account, request);
@@ -226,7 +231,10 @@ public partial class AccountService(
         account.FullName = request.FullName.Trim();
         account.Email = email;
         account.PhoneNumber = phone;
-        account.AvatarUrl = request.AvatarUrl;
+        if (request.AvatarUrl is not null)
+        {
+            account.AvatarUrl = request.AvatarUrl;
+        }
         account.DateOfBirth = request.DateOfBirth;
         account.Gender = request.Gender;
         account.Address = request.Address?.Trim();
