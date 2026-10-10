@@ -256,7 +256,7 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
                                                 orderby r.RecordedAt descending
                                                 select new AttendanceResponse(r.Id, e.Id, a.FullName, d.Name, r.Date, r.RecordedAt, r.Type, r.Status,
                                                     r.DeviationMinutes, r.DistanceMeters, r.GpsAccuracy, r.Reason)).ToListAsync(ct);
-        return await (from r in repo.Query<GoldRequest>().Where(r => (scoped.Contains(r.EmployeeId) || r.PartnerId == id) && r.From <= to && r.To >= @from)
+        return await (from r in repo.Query<GoldRequest>().Where(r => (scoped.Contains(r.EmployeeId) || r.PartnerId == id) && r.From <= to && r.To >= @from && (admin || r.EmployeeId == id || actor.GoldRole == "manager" || r.Type != "supplement"))
                       join e in repo.Query<Employee>() on r.EmployeeId equals e.Id
                       join a in repo.Query<Account>() on e.Id equals a.Id
                       join d in repo.Query<Department>() on e.DepartmentId equals d.Id
@@ -317,6 +317,7 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
     {
         var actor = await Actor(id, admin, ct);
         var r = await repo.Query<GoldRequest>().SingleOrDefaultAsync(r => r.Id == requestId, ct) ?? throw Error("Không tìm thấy đơn.", 404);
+        if (!admin && r.EmployeeId != id && r.Type == "supplement" && actor.GoldRole != "manager") throw Error("Chỉ quản trị viên hoặc trưởng phòng trong phạm vi quản lý được xem yêu cầu bổ sung chấm công.", 403);
         if (r.EmployeeId != id && r.PartnerId != id && !await Scope(actor, admin).AnyAsync(e => e.Id == r.EmployeeId, ct)) throw Error("Không có quyền xem đơn.", 403);
         return r;
     }
@@ -554,14 +555,14 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
         if (r.Type == "explanation")
         {
             var attendance = r.AttendanceId is null ? null : await repo.Query<AttendanceRecord>().SingleOrDefaultAsync(a => a.Id == r.AttendanceId && a.EmployeeId == e.Id, ct);
-            if (attendance is null) throw Error("Giải trình cần bản ghi chấm công của chính nhân viên.");
-            if (attendance.Status is not ("late" or "early-leave" or "early-checkin" or "offsite" or "late-offsite" or "early-leave-offsite" or "early-checkin-offsite"))
+            if (r.AttendanceId is not null && attendance is null) throw Error("Không tìm thấy lượt chấm công của chính nhân viên.");
+            if (attendance is not null && attendance.Status is not ("late" or "early-leave" or "early-checkin" or "offsite" or "late-offsite" or "early-leave-offsite" or "early-checkin-offsite"))
                 throw Error("Chỉ dùng giải trình cho lượt chấm công bất thường. Trường hợp quên chấm vào/ra, hãy gửi đơn bổ sung chấm công.");
-            if (r.From != r.To || r.From > Today || r.ActualTime is null) throw Error("Giải trình cần ngày và giờ chấm công thực tế.");
-            var actualAt = DateTime.SpecifyKind(r.From.ToDateTime(r.ActualTime.Value).AddHours(-7), DateTimeKind.Utc);
+            if (r.From != r.To || r.From > Today || (attendance is not null && r.ActualTime is null)) throw Error("Giải trình cần ngày thực tế; nếu chọn lượt chấm công hệ thống thì cần nhập giờ thực tế.");
+            var actualAt = r.ActualTime is TimeOnly actualTime ? DateTime.SpecifyKind(r.From.ToDateTime(actualTime).AddHours(-7), DateTimeKind.Utc) : (DateTime?)null;
             if (actualAt > UtcNow) throw Error("Giờ chấm công thực tế không thể ở tương lai.");
-            if (await repo.Query<PayrollLock>().AnyAsync(l => l.Id == r.From.Year * 100 + r.From.Month || l.Id == attendance.Date.Year * 100 + attendance.Date.Month, ct)) throw Error("Bảng công của ngày chấm công đã khóa.");
-            if (await repo.Query<AttendanceRecord>().AnyAsync(a => a.Id != attendance.Id && a.EmployeeId == e.Id && a.Date == r.From && a.Type == attendance.Type && a.RecordedAt == actualAt, ct)) throw Error("Ngày thực tế đã có lượt chấm công trùng giờ.");
+            if (await repo.Query<PayrollLock>().AnyAsync(l => l.Id == r.From.Year * 100 + r.From.Month || (attendance != null && l.Id == attendance.Date.Year * 100 + attendance.Date.Month), ct)) throw Error("Bảng công của ngày chấm công đã khóa.");
+            if (attendance is not null && actualAt is DateTime recordedAt && await repo.Query<AttendanceRecord>().AnyAsync(a => a.Id != attendance.Id && a.EmployeeId == e.Id && a.Date == r.From && a.Type == attendance.Type && a.RecordedAt == recordedAt, ct)) throw Error("Ngày thực tế đã có lượt chấm công trùng giờ.");
             var actualSchedule = await repo.Query<WorkSchedule>().SingleOrDefaultAsync(s => s.EmployeeId == e.Id && s.Date == r.From, ct);
             if (actualSchedule is null || actualSchedule.Kind != "work" || actualSchedule.ShiftId is null || actualSchedule.LocationId is null) throw Error("Ngày thực tế cần có lịch làm việc hợp lệ.");
         }
@@ -936,21 +937,23 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
         {
             if (id == r.EmployeeId) throw Error("Không được tự duyệt đơn của mình.", 403);
             var leaveWorkflow = r.Type is "regular" or "leave" or "swap";
-            var canReview = leaveWorkflow ? admin || (actor.GoldRole == "manager" && actor.DepartmentId == owner.DepartmentId)
+            var canReview = r.Type == "supplement" ? admin
+                : r.Type == "explanation" && !admin && actor.GoldRole == "manager" ? false
+                : leaveWorkflow ? admin || (actor.GoldRole == "manager" && actor.DepartmentId == owner.DepartmentId)
                 : r.Status == "manager" ? admin || (actor.GoldRole == "manager" && actor.DepartmentId == owner.DepartmentId)
                 : r.Status == "hr" && (admin || actor.GoldRole == "hr");
             if (!canReview) throw Error("Không có quyền duyệt ở bước này.", 403);
             if (x.Action != "approve" && x.Action != "reject") throw Error("Hành động duyệt không hợp lệ.");
             if (x.Action == "approve" && r.Type == "explanation")
             {
-                if ((x.ActualDate is null) != (x.ActualTime is null)) throw Error("Cần nhập cả ngày và giờ chấm công thực tế.");
+                if (r.AttendanceId is not null && (x.ActualDate is null) != (x.ActualTime is null)) throw Error("Cần nhập cả ngày và giờ chấm công thực tế.");
                 if (x.ActualDate is DateOnly actualDate && x.ActualTime is TimeOnly actualTime)
                 {
                     r.From = actualDate;
                     r.To = actualDate;
                     r.ActualTime = actualTime;
                 }
-                if (r.ActualTime is null) throw Error("Đơn giải trình chưa có giờ chấm công thực tế.");
+                if (r.AttendanceId is not null && r.ActualTime is null) throw Error("Đơn giải trình chưa có giờ chấm công thực tế.");
             }
             if (x.Action == "reject")
             {
@@ -1006,6 +1009,8 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
     private async Task NotifyNext(GoldRequest r, Guid department, CancellationToken ct)
     {
         var recipients = r.Status == "partner" ? new List<Guid> { r.PartnerId!.Value }
+            : r.Type == "supplement" && (r.Status is "manager" or "hr") ? await repo.Query<Account>().Where(a => a.IsActive && a.Role == "admin" && a.Id != r.EmployeeId).Select(a => a.Id).ToListAsync(ct)
+            : r.Type == "explanation" && r.Status == "manager" ? await repo.Query<Account>().Where(a => a.IsActive && a.Role == "admin" && a.Id != r.EmployeeId).Select(a => a.Id).ToListAsync(ct)
             : r.Status is "manager" or "hr" ? await (from e in repo.Query<Employee>()
                                                      join a in repo.Query<Account>() on e.Id equals a.Id
                                                      where a.IsActive && e.Id != r.EmployeeId && (r.Status == "manager" ? e.GoldRole == "manager" && e.DepartmentId == department : e.GoldRole == "hr")
@@ -1021,7 +1026,7 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
             "supplement" => "Đơn bổ sung chấm công",
             _ => "Yêu cầu"
         };
-        var reviewLink = r.Type == "explanation" ? "/#explanation-approvals" : "/#approvals";
+        var reviewLink = r.Type == "explanation" ? "/#explanation-approvals" : r.Type == "supplement" ? "/#supplement-approvals" : "/#approvals";
         foreach (var recipient in recipients.Distinct()) repo.Add(new Notification { UserId = recipient, Title = "Có yêu cầu cần xử lý", Content = $"{requestName} · {r.From:dd/MM/yyyy} → {r.To:dd/MM/yyyy}", Link = reviewLink });
     }
     private async Task ApplyApproved(GoldRequest r, CancellationToken ct)
@@ -1053,7 +1058,8 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
         }
         else if (r.Type == "explanation")
         {
-            var record = await repo.Query<AttendanceRecord>().SingleAsync(a => a.Id == r.AttendanceId, ct);
+            if (r.AttendanceId is not Guid attendanceId) return;
+            var record = await repo.Query<AttendanceRecord>().SingleAsync(a => a.Id == attendanceId, ct);
             var schedule = await repo.Query<WorkSchedule>().SingleAsync(s => s.EmployeeId == r.EmployeeId && s.Date == r.From && s.Kind == "work", ct);
             if (schedule.ShiftId is null || schedule.LocationId is null) throw Error("Ngày chấm công thực tế không có ca làm hợp lệ.");
             record.Date = r.From;

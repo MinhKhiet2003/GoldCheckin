@@ -27,3 +27,7 @@ dialog{max-height:calc(100dvh - 20px);overflow:auto;overscroll-behavior:contain;
 .face-scan-arcs circle.active{stroke:#28df83;opacity:1;filter:drop-shadow(0 0 5px #28df83)}
 .face-camera video{object-position:center 38%}
 .face-capture-preview:not([hidden]){width:min(240px,100%);aspect-ratio:1;max-height:none;object-position:center}
+
+.birthday-list{display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px 18px}.birthday-list>.person{flex:0 1 240px;min-width:210px;margin:0}
+
+.birthday-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px 10px;align-items:start}.birthday-list>.person{min-width:0;margin:0}
