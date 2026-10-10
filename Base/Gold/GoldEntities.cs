@@ -12,6 +12,9 @@ public class Employee
 {
     public Guid Id { get; set; }
     public Guid DepartmentId { get; set; }
+    [MaxLength(100)] public string? FaceEnrollmentId { get; set; }
+    public DateTime? FaceRegisteredAt { get; set; }
+    public Guid? FaceRegisteredBy { get; set; }
     public DateOnly? EmploymentStartDate { get; set; }
     [MaxLength(40)] public string Code { get; set; } = "";
     [MaxLength(100)] public string Position { get; set; } = "";
@@ -88,6 +91,7 @@ public class AttendanceRecord
     public double DistanceMeters { get; set; }
     public double GpsAccuracy { get; set; }
     public double FaceConfidence { get; set; }
+    public byte[]? FacePhoto { get; set; }
     [MaxLength(100)] public string VerificationId { get; set; } = "";
     [MaxLength(200)] public string Device { get; set; } = "";
     [MaxLength(64)] public string Ip { get; set; } = "";

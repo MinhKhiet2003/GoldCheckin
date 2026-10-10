@@ -761,6 +761,9 @@ namespace Base.Migrations
                     b.Property<double>("FaceConfidence")
                         .HasColumnType("double precision");
 
+                    b.Property<byte[]>("FacePhoto")
+                        .HasColumnType("bytea");
+
                     b.Property<double>("GpsAccuracy")
                         .HasColumnType("double precision");
 
@@ -902,6 +905,16 @@ namespace Base.Migrations
 
                     b.Property<DateOnly?>("EmploymentStartDate")
                         .HasColumnType("date");
+
+                    b.Property<string>("FaceEnrollmentId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime?>("FaceRegisteredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("FaceRegisteredBy")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("GoldRole")
                         .IsRequired()

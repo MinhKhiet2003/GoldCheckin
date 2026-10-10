@@ -31,6 +31,8 @@ public static class GoldRules
         }
         return ("normal", 0);
     }
+    public static string CombineLocationStatus(string status, bool offsite) =>
+        !offsite ? status : status == "normal" ? "offsite" : $"{status}-offsite";
     public static IEnumerable<DateOnly> Dates(DateOnly from, DateOnly to)
     {
         if (to < from || to.DayNumber - from.DayNumber > 365)

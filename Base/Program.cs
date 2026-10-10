@@ -24,7 +24,7 @@ builder.Services.AddMemoryCache();
 builder.Services.AddScoped<Base.Gold.IGoldRepository, Base.Gold.GoldRepository>();
 builder.Services.AddScoped<Base.Gold.GoldService>();
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddHttpClient<Base.Gold.IFaceVerifier, Base.Gold.FaceVerifier>(client => client.Timeout = TimeSpan.FromSeconds(15));
+builder.Services.AddHttpClient<Base.Gold.IFaceVerifier, Base.Gold.FaceVerifier>(client => client.Timeout = TimeSpan.FromSeconds(60));
 builder.Services.AddHttpClient<Base.Gold.IFaceEnrollment, Base.Gold.FaceEnrollment>(client => client.Timeout = TimeSpan.FromSeconds(15));
 var webRoot = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
 Directory.CreateDirectory(Path.Combine(webRoot, "uploads"));

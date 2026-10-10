@@ -40,7 +40,7 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
         var employees = await (from e in Scope(actor, admin)
                                join a in repo.Query<Account>() on e.Id equals a.Id
                                join d in repo.Query<Department>() on e.DepartmentId equals d.Id
-                               select new EmployeeResponse(e.Id, a.FullName, e.Code, e.DepartmentId, d.Name, e.Position, e.GoldRole, e.AnnualLeaveBalance, a.DateOfBirth, a.IsActive, e.EmploymentStartDate, a.AvatarUrl != null, a.AvatarUrl)).ToListAsync(ct);
+                               select new EmployeeResponse(e.Id, a.FullName, e.Code, e.DepartmentId, d.Name, e.Position, e.GoldRole, e.AnnualLeaveBalance, a.DateOfBirth, a.IsActive, e.EmploymentStartDate, a.AvatarUrl != null, a.AvatarUrl, e.FaceEnrollmentId != null && e.FaceEnrollmentId != "", e.FaceRegisteredAt)).ToListAsync(ct);
         var name = await repo.Query<Account>().Where(a => a.Id == id).Select(a => a.FullName).SingleAsync(ct);
         return new
         {
@@ -63,8 +63,8 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
             today = Today,
             scheduleLocks = await repo.Query<ScheduleLock>().Select(l => l.Id).ToListAsync(ct),
             canRegisterFace = admin,
-            faceReady = false
-        }; // Browser SDK remains disabled until provider integration is configured.
+            faceReady = !string.IsNullOrWhiteSpace(actor.FaceEnrollmentId)
+        };
     }
     public async Task<Guid?> GetEmployeeAvatarFileId(Guid actorId, bool admin, Guid employeeId, CancellationToken ct)
     {
@@ -253,7 +253,8 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
                                                 join a in repo.Query<Account>() on e.Id equals a.Id
                                                 join d in repo.Query<Department>() on e.DepartmentId equals d.Id
                                                 orderby r.RecordedAt descending
-                                                select new AttendanceResponse(r.Id, e.Id, a.FullName, d.Name, r.Date, r.RecordedAt, r.Type, r.Status, r.DeviationMinutes, r.DistanceMeters)).ToListAsync(ct);
+                                                select new AttendanceResponse(r.Id, e.Id, a.FullName, d.Name, r.Date, r.RecordedAt, r.Type, r.Status,
+                                                    r.DeviationMinutes, r.DistanceMeters, r.GpsAccuracy, r.Reason)).ToListAsync(ct);
         return await (from r in repo.Query<GoldRequest>().Where(r => (scoped.Contains(r.EmployeeId) || r.PartnerId == id) && r.From <= to && r.To >= @from)
                       join e in repo.Query<Employee>() on r.EmployeeId equals e.Id
                       join a in repo.Query<Account>() on e.Id equals a.Id
@@ -295,13 +296,19 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
     }
     public async Task<object> RegisterFace(Guid actorId, bool admin, Guid employeeId, FaceEnrollmentInput input, IFaceEnrollment enrollment, CancellationToken ct)
     {
-        if (!admin) throw Error("Chỉ tài khoản admin được đăng ký hoặc cập nhật khuôn mặt cho nhân viên.", 403);
-        if (!await (from e in repo.Query<Employee>()
-                    join a in repo.Query<Account>() on e.Id equals a.Id
-                    where e.Id == employeeId && a.IsActive
-                    select e.Id).AnyAsync(ct)) throw Error("Không tìm thấy nhân viên đang hoạt động.", 404);
-        var result = await enrollment.Register(actorId, employeeId, input.SessionToken, ct);
-        audit.Begin("RegisterFace", "GoldEmployee", employeeId);
+        if (!admin && actorId != employeeId) throw Error("Bạn chỉ được đăng ký khuôn mặt cho tài khoản của mình.", 403);
+        var employee = await (from e in repo.Query<Employee>()
+                              join a in repo.Query<Account>() on e.Id equals a.Id
+                              where e.Id == employeeId && a.IsActive
+                              select e).SingleOrDefaultAsync(ct) ?? throw Error("Không tìm thấy nhân viên đang hoạt động.", 404);
+        var firstRegistration = string.IsNullOrWhiteSpace(employee.FaceEnrollmentId);
+        if (!admin && !firstRegistration) throw Error("Khuôn mặt đã được đăng ký. Chỉ quản trị viên được đăng ký lại.", 403);
+        audit.Begin(firstRegistration ? "Create" : "Update", "GoldEmployeeFace", employeeId);
+        var result = await enrollment.Register(actorId, employeeId, input.ImageBase64, ct);
+        employee.FaceEnrollmentId = result.EnrollmentId;
+        employee.FaceRegisteredAt = result.VerifiedAt;
+        employee.FaceRegisteredBy = actorId;
+        await repo.Save(ct);
         audit.Complete(new { employeeId, registeredBy = actorId, result.EnrollmentId, result.VerifiedAt });
         return new { employeeId, registeredBy = actorId, registeredAt = result.VerifiedAt };
     }
@@ -424,26 +431,35 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
     }
     public async Task<object> Punch(Guid id, bool admin, PunchInput x, string ip, CancellationToken ct)
     {
-        _ = await Actor(id, admin, ct); var now = UtcNow; var date = DateOnly.FromDateTime(GoldRules.LocalNow(now));
+        var actor = await Actor(id, admin, ct); var now = UtcNow; var date = DateOnly.FromDateTime(GoldRules.LocalNow(now));
+        if (string.IsNullOrWhiteSpace(actor.FaceEnrollmentId)) throw Error("Tài khoản chưa được admin đăng ký khuôn mặt.", 403);
+        if (actor.EmploymentStartDate is { } startDate && date < startDate) throw Error("Chưa đến ngày bắt đầu làm việc của bạn.", 403);
         await using var tx = await repo.Transaction(ct);
         var schedule = await repo.Query<WorkSchedule>().SingleOrDefaultAsync(s => s.EmployeeId == id && s.Date == date, ct);
-        if (schedule is null || schedule.Kind != "work" || schedule.ShiftId is null || schedule.LocationId is null)
-            throw Error("Hôm nay chưa có ca làm hợp lệ.");
-        var location = await repo.Query<WorkLocation>().SingleAsync(l => l.Id == schedule.LocationId, ct);
-        var shift = await repo.Query<WorkShift>().SingleAsync(s => s.Id == schedule.ShiftId, ct);
+        if (schedule is not null && schedule.Kind != "work") throw Error("Hôm nay là ngày nghỉ theo lịch, không thể chấm công.");
         var policy = await repo.Query<AttendancePolicy>().SingleAsync(ct);
-        if (!location.Active) throw Error("Địa điểm đã ngừng nhận chấm công.");
         if (!double.IsFinite(x.Latitude) || !double.IsFinite(x.Longitude) || !double.IsFinite(x.GpsAccuracy) || x.GpsAccuracy > policy.MaxGpsAccuracyMeters)
             throw Error("GPS chưa đủ chính xác. Vui lòng thử lại ở nơi thoáng.");
+        var shift = schedule?.ShiftId is { } shiftId
+            ? await repo.Query<WorkShift>().SingleAsync(s => s.Id == shiftId, ct)
+            : await repo.Query<WorkShift>().OrderByDescending(s => s.Name.ToLower().Contains("hành chính")).ThenBy(s => s.Start).FirstOrDefaultAsync(ct)
+                ?? throw Error("Chưa cấu hình ca làm mặc định. Hãy liên hệ HCNS.", 503);
+        var location = schedule?.LocationId is { } locationId
+            ? await repo.Query<WorkLocation>().SingleOrDefaultAsync(l => l.Id == locationId, ct)
+                ?? throw Error("Địa điểm trong lịch làm không còn tồn tại. Hãy liên hệ quản lý.", 409)
+            : (await repo.Query<WorkLocation>().Where(l => l.Active).ToListAsync(ct))
+                .OrderBy(l => GoldRules.Distance(x.Latitude, x.Longitude, l.Latitude, l.Longitude)).FirstOrDefault()
+                ?? throw Error("Chưa có địa điểm chấm công đang hoạt động. Hãy liên hệ HCNS.", 503);
+        if (!location.Active) throw Error("Địa điểm đã ngừng nhận chấm công.");
         var distance = GoldRules.Distance(x.Latitude, x.Longitude, location.Latitude, location.Longitude);
         var offsite = distance > location.RadiusMeters;
         if (offsite && !policy.AllowOffsite) throw Error($"Bạn đang cách cơ sở {distance:F0} m, ngoài bán kính {location.RadiusMeters} m.");
-        var (status, minutes) = GoldRules.Classify(x.Type, GoldRules.LocalNow(now), shift, policy);
-        if (offsite) status = "offsite";
+        var (timeStatus, minutes) = GoldRules.Classify(x.Type, GoldRules.LocalNow(now), shift, policy);
+        var status = GoldRules.CombineLocationStatus(timeStatus, offsite);
         if (status != "normal" && x.Reason.Trim().Length < 5) throw Error("Chấm công bất thường cần lý do giải trình ít nhất 5 ký tự.");
         if (await repo.Query<AttendanceRecord>().AnyAsync(r => r.EmployeeId == id && r.Date == date && r.Type == x.Type, ct)) throw Error("Đã chấm công loại này hôm nay.", 409);
         if (x.Type == "out" && !await repo.Query<AttendanceRecord>().AnyAsync(r => r.EmployeeId == id && r.Date == date && r.Type == "in", ct)) throw Error("Chưa có giờ vào. Hãy gửi đơn bổ sung chấm công.");
-        var proof = await face.Verify(id, x.VerificationToken, ct);
+        var proof = await face.Verify(id, x.ImageBase64, ct);
         if (await repo.Query<AttendanceRecord>().AnyAsync(r => r.VerificationId == proof.VerificationId, ct)) throw Error("Phiên xác thực đã sử dụng.", 409);
         var r = new AttendanceRecord
         {
@@ -458,6 +474,7 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
             DistanceMeters = distance,
             GpsAccuracy = x.GpsAccuracy,
             FaceConfidence = proof.Confidence,
+            FacePhoto = FaceEnrollment.DecodeImage(x.ImageBase64),
             VerificationId = proof.VerificationId,
             Device = x.Device,
             Ip = ip,

@@ -17,7 +17,7 @@ public record EmployeeInput([Required, MaxLength(40)] string Code, Guid Departme
     [Required, MaxLength(100)] string Position, [RegularExpression("employee|manager|hr")] string GoldRole,
     [Range(0, 365)] decimal? AnnualLeaveBalance = null, bool? IsActive = null,
     DateOnly? DateOfBirth = null, [Required] DateOnly? EmploymentStartDate = null);
-public record FaceEnrollmentInput([Required, MaxLength(512)] string SessionToken);
+public record FaceEnrollmentInput([Required, MaxLength(7_000_000)] string ImageBase64);
 public record LocationInput([Required, MaxLength(150)] string Name, [Required, MaxLength(500)] string Address,
     [Range(-90, 90)] double Latitude, [Range(-180, 180)] double Longitude, [Range(10, 1000)] int RadiusMeters, bool Active);
 public record ShiftInput([Required, MaxLength(100)] string Name, TimeOnly Start, TimeOnly End);
@@ -32,7 +32,7 @@ public record PolicyInput([Range(0, 15)] int RegularDays, [Range(0, 31)] int Ann
     [Range(0, 240)] int OvertimeAfterMinutes = 0);
 public record PunchInput([RegularExpression("in|out")] string Type, [Range(-90, 90)] double Latitude,
     [Range(-180, 180)] double Longitude, [Range(0, 10000)] double GpsAccuracy,
-    [Required, MaxLength(200)] string Device, [Required, MaxLength(512)] string VerificationToken,
+    [Required, MaxLength(200)] string Device, [Required, MaxLength(7_000_000)] string ImageBase64,
     [MaxLength(2000)] string Reason = "");
 public record RequestInput([Required, RegularExpression("leave|regular|swap|explanation|supplement")] string Type,
     [Required, RegularExpression("annual|unpaid|sick|personal|marriage|bereavement|maternity|other")] string LeaveKind,
@@ -61,7 +61,8 @@ public record StaffingInput(Guid DepartmentId, [Required, MaxLength(100)] string
 public record PeakInput(DateOnly Date, [Required, MaxLength(200)] string Reason, bool BlockLeave);
 public record EmployeeResponse(Guid Id, string Name, string Code, Guid DepartmentId, string Department,
     string Position, string GoldRole, decimal AnnualLeaveBalance, DateOnly? DateOfBirth, bool IsActive,
-    DateOnly? EmploymentStartDate, bool HasAvatar = false, string? AvatarVersion = null);
+    DateOnly? EmploymentStartDate, bool HasAvatar = false, string? AvatarVersion = null,
+    bool FaceEnrolled = false, DateTime? FaceRegisteredAt = null);
 public sealed class EmployeeImportResult
 {
     public int TotalRows { get; set; }
@@ -75,7 +76,8 @@ public record EmployeeImportIssue(int Row, string Message);
 public record ScheduleResponse(Guid Id, Guid EmployeeId, string Name, DateOnly Date, Guid? ShiftId,
     string? Shift, string? Start, string? End, Guid? LocationId, string? Location, string Kind, bool Locked);
 public record AttendanceResponse(Guid Id, Guid EmployeeId, string Name, string Department, DateOnly Date,
-    DateTime RecordedAt, string Type, string Status, int DeviationMinutes, double DistanceMeters);
+    DateTime RecordedAt, string Type, string Status, int DeviationMinutes, double DistanceMeters,
+    double GpsAccuracy, string Reason);
 public record RequestResponse(Guid Id, Guid EmployeeId, string Name, string Department, string Type,
     string LeaveKind, DateOnly From, DateOnly To, string Reason, string Handover, string Status,
     Guid? PartnerId, string? PartnerName, string ReviewNote, DateTime CreatedAt, Guid? ReplacesRequestId, bool IsCancellation, Guid DepartmentId,

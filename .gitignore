@@ -9,6 +9,9 @@
 *.csproj.user
 appsettings.Development.json
 
+# Local CompreFace download and extracted runtime
+Base/.local/
+
 # User-uploaded runtime files; keep the placeholder rule
 Base/wwwroot/uploads/*
 !Base/wwwroot/uploads/.gitignore

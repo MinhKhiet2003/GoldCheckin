@@ -15,7 +15,8 @@ namespace Base.Gold;
 public class GoldController(
     GoldService service,
     Base.Services.IServices.IAccountService accounts,
-    IFaceEnrollment enrollment)
+    IFaceEnrollment enrollment,
+    IFaceVerifier faceVerifier)
     : ControllerBase
 {
     private Guid UserId =>
@@ -158,7 +159,6 @@ public class GoldController(
     }
 
     [HttpPost("employees/{id:guid}/face")]
-    [Authorize(Roles = "admin")]
     public async Task<ActionResult> RegisterFace(
         Guid id,
         FaceEnrollmentInput x,
@@ -172,6 +172,14 @@ public class GoldController(
                 x,
                 enrollment,
                 ct));
+    }
+
+    [HttpPost("face-scan")]
+    public async Task<ActionResult> ScanFace(
+        FaceEnrollmentInput x,
+        CancellationToken ct)
+    {
+        return Success(await faceVerifier.Scan(x.ImageBase64, ct));
     }
 
     [HttpPost("locations")]
@@ -526,7 +534,9 @@ public class GoldController(
             "Loại",
             "Trạng thái",
             "Phút bất thường",
-            "Khoảng cách (m)"
+            "Khoảng cách (m)",
+            "Sai số GPS (m)",
+            "Lý do giải trình"
         ];
 
         for (var i = 0; i < headers.Length; i++)
@@ -585,6 +595,12 @@ public class GoldController(
 
             sheet.Cell(rowNumber, 8).Value =
                 Math.Round(row.DistanceMeters);
+
+            sheet.Cell(rowNumber, 9).Value =
+                Math.Round(row.GpsAccuracy);
+
+            sheet.Cell(rowNumber, 10).Value =
+                row.Reason;
 
             rowNumber++;
         }
