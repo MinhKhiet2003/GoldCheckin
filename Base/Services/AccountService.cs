@@ -132,6 +132,32 @@ public partial class AccountService(
         return UserResponse.From(account);
     }
 
+    public async Task AdminResetPasswordAsync(Guid id, AdminResetPasswordRequest request, CancellationToken cancellationToken)
+    {
+        if (!string.Equals(request.NewPassword, request.ConfirmNewPassword, StringComparison.Ordinal))
+        {
+            throw new ApiException(400, "Mật khẩu nhập lại không khớp.");
+        }
+
+        var account = await RequireAsync(id, cancellationToken);
+        if (account.Role == AppRoles.Admin)
+        {
+            throw new ApiException(403, "Chức năng này chỉ dùng để cấp lại mật khẩu cho nhân viên.");
+        }
+
+        var before = UserResponse.From(account);
+        account.PasswordHash = passwordHasher.HashPassword(account, request.NewPassword);
+        account.UpdatedAt = DateTime.UtcNow;
+
+        // Buộc nhân viên đăng nhập lại trên tất cả thiết bị sau khi admin đổi mật khẩu.
+        await authService.LogoutAllAsync(account.Id, cancellationToken);
+        await repository.SaveAsync(cancellationToken);
+
+        // Không đưa mật khẩu hoặc hash vào audit log.
+        audit.Begin("AdminResetPassword", "User", account.Id, before);
+        audit.Complete(UserResponse.From(account));
+    }
+
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         var account = await RequireAsync(id, cancellationToken);

@@ -250,6 +250,25 @@ public class AccountsController(IAccountService accountService, IMemoryCache cac
         });
     }
 
+    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Policy = AppPermissions.UpdateUser)]
+    [EndpointSummary("Cấp lại mật khẩu cho nhân viên")]
+    [HttpPut("{id:guid}/password")]
+    public async Task<ActionResult<ApiResponse<object>>> AdminResetPassword(
+        Guid id,
+        AdminResetPasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        await accountService.AdminResetPasswordAsync(id, request, cancellationToken);
+
+        return Ok(new ApiResponse<object>
+        {
+            StatusCode = StatusCodes.Status200OK,
+            Success = true,
+            Message = "Đã cấp lại mật khẩu. Nhân viên cần đăng nhập lại trên các thiết bị."
+        });
+    }
+
     [Authorize(Policy = AppPermissions.DeleteUser)]
     [EndpointSummary("Xóa tài khoản")]
     [HttpDelete("{id:guid}")]

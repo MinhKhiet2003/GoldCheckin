@@ -13,6 +13,7 @@ public interface IAccountService
     Task<UserResponse> UpdateAsync(Guid id, ProfileRequest request, CancellationToken cancellationToken);
     Task<UserResponse> UpdateAvatarAsync(Guid id, string avatarUrl, CancellationToken cancellationToken);
     Task<UserResponse> AdminUpdateAsync(Guid id, AdminUpdateRequest request, CancellationToken cancellationToken);
+    Task AdminResetPasswordAsync(Guid id, AdminResetPasswordRequest request, CancellationToken cancellationToken);
     Task<UserResponse> AssignRoleAsync(Guid actorId, Guid accountId, string role, CancellationToken cancellationToken);
     Task DeleteAsync(Guid id, CancellationToken cancellationToken);
 }
