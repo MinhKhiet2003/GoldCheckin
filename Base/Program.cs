@@ -201,6 +201,19 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+if (app.Environment.IsProduction())
+{
+    await using var migrationScope = app.Services.CreateAsyncScope();
+    var migrationLogger = migrationScope.ServiceProvider
+        .GetRequiredService<ILoggerFactory>()
+        .CreateLogger("DatabaseMigrations");
+
+    migrationLogger.LogInformation("Applying pending database migrations before starting the production app.");
+    var db = migrationScope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();
+    migrationLogger.LogInformation("Database migrations are up to date.");
+}
+
 app.UseMiddleware<SystemLogMiddleware>();
 
 app.UseMiddleware<ApiExceptionMiddleware>();

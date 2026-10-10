@@ -27,7 +27,7 @@ After saving environment variables, restart the app pool/site, then run Build & 
 
 The hosting provider's **Local access** hostname is available only to applications running in that provider's network. A connection test from a local PC to that hostname can time out even if the hosted site can reach it. For local tools such as Navicat, use the database's separate **Remote access** host/settings and allow-list your public IP, if the provider supports it. Do not expose a database password in source control.
 
-The database currently reports zero tables. After the app starts, apply EF migrations against the production database using a secure migration connection, or run the provider-supported migration process. At minimum this commit adds migration `20261006030000_FaceEnrollment`; the app code does not auto-run migrations at startup.
+In Production, the app now runs `Database.MigrateAsync()` before accepting requests. Each app start (including after Build & Publish restarts it) applies any pending EF migrations. The database login must have permission to create and alter tables. If database access or a migration fails, app startup fails and the host may show HTTP 500.30; check the startup log before retrying. At minimum the current code includes migration `20261006030000_FaceEnrollment`.
 
 ## 4. Diagnose HTTP 500.30
 
