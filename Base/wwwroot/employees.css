@@ -198,3 +198,5 @@ input[type="month"]::-webkit-calendar-picker-indicator {
 .employee-detail h3 { margin: 0 0 12px; color: #385344; font-size: 13px; font-weight: 700; }
 dialog:has(.employee-detail) { width: min(860px, calc(100vw - 40px)); max-height: calc(100dvh - 36px); overflow: auto; }
 @media (max-width: 600px) { dialog:has(.employee-detail) { width: calc(100vw - 16px); max-height: calc(100dvh - 16px); } }
+
+.employee-actions .btn { height: 36px; min-height: 36px; flex: 1 1 0; min-width: 0; padding: 6px 5px; font-size: 9px; line-height: 1; white-space: nowrap; }
