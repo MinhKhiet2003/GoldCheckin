@@ -114,21 +114,29 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
                           select new { a.Username, a.FullName, a.Email, a.PhoneNumber, a.DateOfBirth, a.Gender, a.Address,
                               e.Code, e.Position, Department = d.Name, e.GoldRole, e.AnnualLeaveBalance,
                               e.EmploymentStartDate, a.IsActive }).ToListAsync(ct);
-        using var workbook = new XLWorkbook(); var sheet = workbook.AddWorksheet("NhanVien");
-        string[] headers = ["Username", "FullName", "Email", "PhoneNumber", "DateOfBirth", "Gender", "Address", "Code", "Position", "Department", "GoldRole", "AnnualLeaveBalance", "EmploymentStartDate", "IsActive"];
-        for (var col = 0; col < headers.Length; col++) { sheet.Cell(1, col + 1).Value = headers[col]; sheet.Column(col + 1).Width = 22; }
+        using var workbook = new XLWorkbook(); var sheet = workbook.AddWorksheet("Danh sách nhân viên");
+        string[] headers = ["Tên đăng nhập", "Họ và tên", "Thư điện tử", "Số điện thoại", "Ngày sinh", "Giới tính", "Địa chỉ", "Mã nhân viên", "Chức danh", "Phòng ban", "Vai trò", "Phép năm còn lại (ngày)", "Ngày bắt đầu làm việc", "Trạng thái tài khoản"];
+        for (var col = 0; col < headers.Length; col++) { sheet.Cell(1, col + 1).Value = headers[col]; sheet.Column(col + 1).Width = col switch { 0 or 2 => 25, 1 or 8 or 9 => 28, 3 or 7 => 18, 5 or 10 or 13 => 21, 11 => 25, _ => 22 }; }
         for (var i = 0; i < rows.Count; i++)
         {
             var row = rows[i]; var n = i + 2;
             sheet.Cell(n, 1).Value = row.Username; sheet.Cell(n, 2).Value = row.FullName; sheet.Cell(n, 3).Value = row.Email;
-            sheet.Cell(n, 4).Value = row.PhoneNumber ?? ""; sheet.Cell(n, 5).Value = row.DateOfBirth?.ToString("yyyy-MM-dd") ?? "";
-            sheet.Cell(n, 6).Value = row.Gender ?? ""; sheet.Cell(n, 7).Value = row.Address ?? ""; sheet.Cell(n, 8).Value = row.Code;
-            sheet.Cell(n, 9).Value = row.Position; sheet.Cell(n, 10).Value = row.Department; sheet.Cell(n, 11).Value = row.GoldRole;
-            sheet.Cell(n, 12).Value = row.AnnualLeaveBalance; sheet.Cell(n, 13).Value = row.EmploymentStartDate?.ToString("yyyy-MM-dd") ?? "";
-            sheet.Cell(n, 14).Value = row.IsActive ? "true" : "false";
+            sheet.Cell(n, 4).Value = row.PhoneNumber ?? "";
+            if (row.DateOfBirth is { } birth) sheet.Cell(n, 5).Value = birth.ToDateTime(TimeOnly.MinValue);
+            sheet.Cell(n, 6).Value = row.Gender switch { "Male" => "Nam", "Female" => "Nữ", "Other" => "Khác", "PreferNotToSay" => "Không muốn tiết lộ", null or "" => "", _ => "Chưa xác định" };
+            sheet.Cell(n, 7).Value = row.Address ?? ""; sheet.Cell(n, 8).Value = row.Code;
+            sheet.Cell(n, 9).Value = row.Position; sheet.Cell(n, 10).Value = row.Department;
+            sheet.Cell(n, 11).Value = row.GoldRole switch { "employee" => "Nhân viên", "manager" => "Trưởng phòng", "hr" => "Hành chính nhân sự", _ => "Quản trị viên" };
+            sheet.Cell(n, 12).Value = row.AnnualLeaveBalance;
+            if (row.EmploymentStartDate is { } startDate) sheet.Cell(n, 13).Value = startDate.ToDateTime(TimeOnly.MinValue);
+            sheet.Cell(n, 14).Value = row.IsActive ? "Đang hoạt động" : "Đã khóa";
         }
         sheet.Row(1).Style.Font.Bold = true; sheet.Row(1).Style.Fill.BackgroundColor = XLColor.FromHtml("#087c50");
         sheet.Row(1).Style.Font.FontColor = XLColor.White; sheet.SheetView.FreezeRows(1);
+        if (rows.Count > 0) sheet.Range(1, 1, rows.Count + 1, headers.Length).SetAutoFilter();
+        sheet.Column(5).Style.DateFormat.Format = "dd/MM/yyyy";
+        sheet.Column(13).Style.DateFormat.Format = "dd/MM/yyyy";
+        sheet.Column(12).Style.NumberFormat.Format = "0.##";
         using var output = new MemoryStream(); workbook.SaveAs(output); return output.ToArray();
     }
 

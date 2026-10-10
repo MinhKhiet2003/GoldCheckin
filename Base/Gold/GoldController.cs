@@ -558,7 +558,27 @@ public class GoldController(
                     : "Ra";
 
             sheet.Cell(rowNumber, 6).Value =
-                row.Status;
+                row.Status switch
+                {
+                    "normal" => "Đúng giờ",
+                    "late" => "Đi muộn",
+                    "early-leave" => "Về sớm",
+                    "early-checkin" => "Chấm công sớm",
+                    "offsite" => "Ngoài cơ sở",
+                    "late-offsite" => "Đi muộn · ngoài cơ sở",
+                    "early-leave-offsite" => "Về sớm · ngoài cơ sở",
+                    "early-checkin-offsite" => "Chấm công sớm · ngoài cơ sở",
+                    "explained" => "Đã giải trình",
+                    "supplemented" => "Đã bổ sung",
+                    "approved" => "Đã duyệt",
+                    "rejected" => "Từ chối",
+                    "cancelled" => "Đã hủy",
+                    "pending" => "Chờ xử lý",
+                    "partner" => "Chờ đồng nghiệp",
+                    "manager" => "Chờ trưởng phòng",
+                    "hr" => "Chờ hành chính nhân sự",
+                    _ => "Chưa xác định"
+                };
 
             sheet.Cell(rowNumber, 7).Value =
                 row.DeviationMinutes;
