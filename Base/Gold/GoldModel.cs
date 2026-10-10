@@ -57,7 +57,7 @@ public static class GoldModel
         b.Entity<StaffingRule>().HasOne<Department>().WithMany().HasForeignKey(s => s.DepartmentId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<PeakDay>().ToTable("GoldPeakDay").HasKey(p => p.Date);
         b.Entity<AttendanceRecord>().ToTable("GoldAttendance");
-        b.Entity<AttendanceRecord>().HasIndex(r => new { r.EmployeeId, r.Date, r.Type }).IsUnique();
+        b.Entity<AttendanceRecord>().HasIndex(r => new { r.EmployeeId, r.Date, r.Type, r.RecordedAt }).IsUnique();
         b.Entity<AttendanceRecord>().HasIndex(r => r.VerificationId).IsUnique();
         b.Entity<AttendanceRecord>().HasOne<Employee>().WithMany().HasForeignKey(r => r.EmployeeId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<AttendanceRecord>().HasOne<WorkShift>().WithMany().HasForeignKey(r => r.ShiftId).OnDelete(DeleteBehavior.Restrict);
@@ -65,6 +65,7 @@ public static class GoldModel
         b.Entity<GoldRequest>().ToTable("GoldRequest");
         b.Entity<GoldRequest>().Property(r => r.PaidLeaveDays).HasPrecision(6, 2);
         b.Entity<GoldRequest>().Property(r => r.UnpaidLeaveDays).HasPrecision(6, 2);
+        b.Entity<GoldRequest>().Property(r => r.SupplementPunchesJson).HasColumnType("jsonb");
         b.Entity<GoldRequest>().HasIndex(r => new { r.EmployeeId, r.From, r.Status });
         b.Entity<GoldRequest>().Property(r => r.Version).IsConcurrencyToken();
         b.Entity<GoldRequest>().HasOne<Employee>().WithMany().HasForeignKey(r => r.EmployeeId).OnDelete(DeleteBehavior.Restrict);

@@ -816,7 +816,7 @@ namespace Base.Migrations
                     b.HasIndex("VerificationId")
                         .IsUnique();
 
-                    b.HasIndex("EmployeeId", "Date", "Type")
+                    b.HasIndex("EmployeeId", "Date", "Type", "RecordedAt")
                         .IsUnique();
 
                     b.ToTable("GoldAttendance", (string)null);
@@ -953,6 +953,16 @@ namespace Base.Migrations
 
                     b.Property<TimeOnly?>("ActualTime")
                         .HasColumnType("time without time zone");
+
+                    b.Property<DateTime?>("SystemRecordedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly?>("SystemRecordedDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("SupplementPunchesJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
 
                     b.Property<Guid?>("AttachmentId")
                         .HasColumnType("uuid");

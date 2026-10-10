@@ -1,0 +1,12 @@
+.request-tabs { display: flex; gap: 7px; overflow-x: auto; padding: 13px 22px 0; border-bottom: 1px solid var(--line); scrollbar-width: thin; }
+.request-tab { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; min-height: 39px; padding: 8px 12px; border: 1px solid transparent; border-bottom: 2px solid transparent; border-radius: 8px 8px 0 0; background: transparent; color: #718177; font-size: 11px; white-space: nowrap; }
+.request-tab span { display: inline-grid; place-items: center; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 20px; background: #f0f4f0; color: #76867b; font-size: 9px; }
+.request-tab:hover { background: #f7faf7; color: var(--green); }
+.request-tab.active { border-color: #e1eee4; border-bottom-color: var(--green); background: #f4faf5; color: var(--green); font-weight: 600; }
+.request-tab.active span { background: #e0f1e4; color: var(--green); }
+.request-table tbody tr.request-row { cursor: pointer; transition: background-color 140ms ease; }
+.request-table tbody tr.request-row:hover td { background: #f5faf6; }
+.request-table tbody tr.request-row:focus-visible { outline: 2px solid #54a77e; outline-offset: -2px; }
+.request-table td { vertical-align: middle; }
+.request-table td small { max-width: 420px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 600px) { .request-tabs { padding: 11px 14px 0; } .request-tab { padding-inline: 10px; } .request-table { min-width: 650px; } }

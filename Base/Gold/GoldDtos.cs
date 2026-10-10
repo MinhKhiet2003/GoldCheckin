@@ -34,6 +34,7 @@ public record PunchInput([RegularExpression("in|out")] string Type, [Range(-90, 
     [Range(-180, 180)] double Longitude, [Range(0, 10000)] double GpsAccuracy,
     [Required, MaxLength(200)] string Device, [Required, MaxLength(7_000_000)] string ImageBase64,
     [MaxLength(2000)] string Reason = "");
+public record SupplementPunchInput(TimeOnly Time, [Required, RegularExpression("in|out")] string Type);
 public record RequestInput([Required, RegularExpression("leave|regular|swap|explanation|supplement")] string Type,
     [Required, RegularExpression("annual|unpaid|sick|personal|marriage|bereavement|maternity|other")] string LeaveKind,
     DateOnly From, DateOnly To, [MaxLength(2000)] string Reason = "",
@@ -41,7 +42,8 @@ public record RequestInput([Required, RegularExpression("leave|regular|swap|expl
     TimeOnly? ActualTime = null, [RegularExpression("in|out")] string? AttendanceType = null,
     Guid? HandoverEmployeeId = null, [MaxLength(2000)] string Handover = "", Guid? AttachmentId = null,
     [RegularExpression("morning|afternoon|full")] string LeaveSession = "full",
-    [RegularExpression("morning|afternoon|full")] string EndLeaveSession = "full");
+    [RegularExpression("morning|afternoon|full")] string EndLeaveSession = "full",
+    [MaxLength(4)] SupplementPunchInput[]? SupplementPunches = null);
 public record LeaveRequestEditInput(DateOnly From, DateOnly To,
     [RegularExpression("annual|unpaid|sick|personal|marriage|bereavement|maternity|other")] string LeaveKind,
     [RegularExpression("morning|afternoon|full")] string LeaveSession,
@@ -55,14 +57,14 @@ public record RegularLeaveEditInput(DateOnly From, DateOnly To, int Version,
     [RegularExpression("morning|afternoon|full")] string LeaveSession = "full",
     [MaxLength(2000)] string Reason = "", Guid? HandoverEmployeeId = null, [MaxLength(2000)] string Handover = "");
 public record ReviewInput([RegularExpression("approve|reject|cancel|accept")] string Action,
-    [MaxLength(2000)] string Note = "");
+    [MaxLength(2000)] string Note = "", DateOnly? ActualDate = null, TimeOnly? ActualTime = null);
 public record StaffingInput(Guid DepartmentId, [Required, MaxLength(100)] string Position,
     [Range(0, 500)] int WeekdayMinimum, [Range(0, 500)] int WeekendMinimum);
 public record PeakInput(DateOnly Date, [Required, MaxLength(200)] string Reason, bool BlockLeave);
 public record EmployeeResponse(Guid Id, string Name, string Code, Guid DepartmentId, string Department,
     string Position, string GoldRole, decimal AnnualLeaveBalance, DateOnly? DateOfBirth, bool IsActive,
     DateOnly? EmploymentStartDate, bool HasAvatar = false, string? AvatarVersion = null,
-    bool FaceEnrolled = false, DateTime? FaceRegisteredAt = null);
+    bool FaceEnrolled = false, DateTime? FaceRegisteredAt = null, string? Username = null);
 public sealed class EmployeeImportResult
 {
     public int TotalRows { get; set; }

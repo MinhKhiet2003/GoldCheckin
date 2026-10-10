@@ -116,6 +116,9 @@ public class GoldRequest
     public DateOnly? PartnerDate { get; set; }
     public Guid? AttendanceId { get; set; }
     public TimeOnly? ActualTime { get; set; }
+    public DateTime? SystemRecordedAt { get; set; }
+    public DateOnly? SystemRecordedDate { get; set; }
+  public string SupplementPunchesJson { get; set; } = "[]";
     [MaxLength(10)] public string? AttendanceType { get; set; }
     [MaxLength(2000)] public string Reason { get; set; } = "";
     [MaxLength(2000)] public string Handover { get; set; } = "";
