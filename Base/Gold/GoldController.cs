@@ -240,6 +240,13 @@ public class GoldController(
                 ct));
     }
 
+    [HttpDelete("shifts/{id:guid}")]
+    public async Task<ActionResult> DeleteShift(Guid id, CancellationToken ct)
+    {
+        await service.DeleteShift(UserId, Admin, id, ct);
+        return Success();
+    }
+
     [HttpPut("policy")]
     public async Task<ActionResult> Policy(
         PolicyInput x,

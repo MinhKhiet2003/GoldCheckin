@@ -450,6 +450,21 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
         audit.Begin("Update", "GoldShift", s.Id, new { s.Name, s.Start, s.End, s.Period }); if (shiftId is null) repo.Add(s);
         s.Name = x.Name; s.Start = x.Start; s.End = x.End; s.Period = period; await repo.Save(ct); audit.Complete(s); return s;
     }
+    public async Task DeleteShift(Guid actorId, bool admin, Guid shiftId, CancellationToken ct)
+    {
+        await RequireHr(actorId, admin, ct);
+        var shift = await repo.Query<WorkShift>().SingleOrDefaultAsync(s => s.Id == shiftId, ct)
+            ?? throw Error("Không tìm thấy ca làm việc.", 404);
+        if (await repo.Query<DepartmentShift>().AnyAsync(x => x.ShiftId == shiftId, ct) ||
+            await repo.Query<WorkSchedule>().AnyAsync(x => x.ShiftId == shiftId, ct) ||
+            await repo.Query<AttendanceRecord>().AnyAsync(x => x.ShiftId == shiftId, ct))
+            throw Error("Không thể xóa ca đang được cấu hình cho phòng ban, xếp lịch hoặc dùng trong dữ liệu chấm công. Hãy gỡ các liên kết trước.", 409);
+
+        audit.Begin("Delete", "GoldShift", shift.Id, new { shift.Name, shift.Period, shift.Start, shift.End });
+        repo.Remove(shift);
+        await repo.Save(ct);
+        audit.Complete(new { shift.Id, shift.Name });
+    }
     public async Task SavePolicy(Guid id, bool admin, PolicyInput x, CancellationToken ct)
     {
         await RequireHr(id, admin, ct); var p = await repo.Query<AttendancePolicy>().SingleAsync(ct);
