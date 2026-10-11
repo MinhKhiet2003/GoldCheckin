@@ -37,7 +37,7 @@ public record PolicyInput([Range(0, 15)] int RegularDays, [Range(0, 31)] int Ann
 public record PunchInput([RegularExpression("in|out")] string Type, [Range(-90, 90)] double Latitude,
     [Range(-180, 180)] double Longitude, [Range(0, 10000)] double GpsAccuracy,
     [Required, MaxLength(200)] string Device, [Required, MaxLength(7_000_000)] string ImageBase64,
-    [MaxLength(2000)] string Reason = "");
+    [MaxLength(2000)] string Reason = "", Guid? ShiftId = null);
 public record SupplementPunchInput(TimeOnly Time, [Required, RegularExpression("in|out")] string Type);
 public record SupplementAttendanceCorrectionInput(DateOnly Date,
     [Required, MinLength(1), MaxLength(4)] SupplementPunchInput[] Punches, int Version);
@@ -84,7 +84,7 @@ public record EmployeeImportIssue(int Row, string Message);
 public record ScheduleResponse(Guid Id, Guid EmployeeId, string Name, DateOnly Date, Guid? ShiftId,
     string? Shift, string? Start, string? End, Guid? LocationId, string? Location, string Kind, bool Locked);
 public record AttendanceResponse(Guid Id, Guid EmployeeId, string Name, string Department, DateOnly Date,
-    DateTime RecordedAt, string Type, string Status, int DeviationMinutes, double DistanceMeters,
+    DateTime RecordedAt, string Type, string Status, Guid ShiftId, string Shift, int DeviationMinutes, double DistanceMeters,
     double GpsAccuracy, string Reason);
 public record RequestResponse(Guid Id, Guid EmployeeId, string Name, string Department, string Type,
     string LeaveKind, DateOnly From, DateOnly To, string Reason, string Handover, string Status,

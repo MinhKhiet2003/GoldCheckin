@@ -254,9 +254,10 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
                                                 join e in repo.Query<Employee>() on r.EmployeeId equals e.Id
                                                 join a in repo.Query<Account>() on e.Id equals a.Id
                                                 join d in repo.Query<Department>() on e.DepartmentId equals d.Id
+                                                join sh in repo.Query<WorkShift>() on r.ShiftId equals sh.Id
                                                 orderby r.RecordedAt descending
                                                 select new AttendanceResponse(r.Id, e.Id, a.FullName, d.Name, r.Date, r.RecordedAt, r.Type, r.Status,
-                                                    r.DeviationMinutes, r.DistanceMeters, r.GpsAccuracy, r.Reason)).ToListAsync(ct);
+                                                    r.ShiftId, sh.Name, r.DeviationMinutes, r.DistanceMeters, r.GpsAccuracy, r.Reason)).ToListAsync(ct);
         return await (from r in repo.Query<GoldRequest>().Where(r => (scoped.Contains(r.EmployeeId) || r.PartnerId == id) && r.From <= to && r.To >= @from && (admin || r.EmployeeId == id || actor.GoldRole == "manager" || r.Type != "supplement"))
                       join e in repo.Query<Employee>() on r.EmployeeId equals e.Id
                       join a in repo.Query<Account>() on e.Id equals a.Id
@@ -441,6 +442,10 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
     public async Task<object> SaveShift(Guid id, bool admin, Guid? shiftId, ShiftInput x, CancellationToken ct)
     {
         await RequireHr(id, admin, ct);
+        var name = x.Name.Trim();
+        if (await repo.Query<WorkShift>().AnyAsync(existing => existing.Id != (shiftId ?? Guid.Empty)
+            && existing.Name.Trim().ToLower() == name.ToLower(), ct))
+            throw Error("Tên ca làm việc đã tồn tại. Vui lòng chọn tên khác.", 409);
         if (x.End <= x.Start) throw Error("Ca phải kết thúc sau giờ bắt đầu; phiên bản này dùng ca trong ngày.");
         var s = shiftId is null ? new WorkShift() : await repo.Query<WorkShift>().SingleOrDefaultAsync(s => s.Id == shiftId, ct) ?? throw Error("Không có ca.", 404);
         var period = x.Period ?? (x.Start >= new TimeOnly(17, 0) ? "evening"
@@ -448,7 +453,7 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
         if (shiftId is not null && (s.Start != x.Start || s.End != x.End || s.Period != period) && await repo.Query<WorkSchedule>().AnyAsync(w => w.ShiftId == shiftId && w.Date <= Today, ct))
             throw Error("Ca đã được dùng trong lịch hiện tại hoặc quá khứ. Hãy tạo ca mới để giữ dữ liệu đối soát.", 409);
         audit.Begin("Update", "GoldShift", s.Id, new { s.Name, s.Start, s.End, s.Period }); if (shiftId is null) repo.Add(s);
-        s.Name = x.Name; s.Start = x.Start; s.End = x.End; s.Period = period; await repo.Save(ct); audit.Complete(s); return s;
+        s.Name = name; s.Start = x.Start; s.End = x.End; s.Period = period; await repo.Save(ct); audit.Complete(s); return s;
     }
     public async Task DeleteShift(Guid actorId, bool admin, Guid shiftId, CancellationToken ct)
     {
@@ -486,8 +491,6 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
             ("afternoon", input.AfternoonShiftIds ?? []),
             ("evening", input.EveningShiftIds ?? [])
         };
-        if (groups.Any(group => group.Ids.Length > 1))
-            throw Error("Chỉ được chọn một ca trong mỗi nhóm ca sáng, chiều hoặc tối.");
         var selectedIds = groups.SelectMany(group => group.Ids).ToArray();
         if (selectedIds.Distinct().Count() != selectedIds.Length)
             throw Error("Mỗi ca chỉ được chọn một nhóm thời gian.");
@@ -649,10 +652,22 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
         var policy = await repo.Query<AttendancePolicy>().SingleAsync(ct);
         if (!double.IsFinite(x.Latitude) || !double.IsFinite(x.Longitude) || !double.IsFinite(x.GpsAccuracy) || x.GpsAccuracy > policy.MaxGpsAccuracyMeters)
             throw Error("GPS chưa đủ chính xác. Vui lòng thử lại ở nơi thoáng.");
-        var shift = schedule?.ShiftId is { } shiftId
-            ? await repo.Query<WorkShift>().SingleAsync(s => s.Id == shiftId, ct)
-            : await repo.Query<WorkShift>().OrderByDescending(s => s.Name.ToLower().Contains("hành chính")).ThenBy(s => s.Start).FirstOrDefaultAsync(ct)
+        var previousShiftId = await repo.Query<AttendanceRecord>().Where(r => r.EmployeeId == id && r.Date == date)
+            .Select(r => (Guid?)r.ShiftId).FirstOrDefaultAsync(ct);
+        if (previousShiftId is { } previous && x.ShiftId is { } requested && requested != previous)
+            throw Error("Lượt chấm công trong ngày cần dùng cùng một ca làm việc.", 409);
+        var selectedShiftId = previousShiftId ?? x.ShiftId ?? schedule?.ShiftId;
+        if (selectedShiftId is null)
+        {
+            if (await repo.Query<DepartmentShift>().AnyAsync(ds => ds.DepartmentId == actor.DepartmentId, ct))
+                throw Error("Vui lòng chọn ca làm việc của phòng ban trước khi chấm công.");
+            selectedShiftId = await repo.Query<WorkShift>().OrderByDescending(s => s.Name.ToLower().Contains("hành chính"))
+                .ThenBy(s => s.Start).Select(s => (Guid?)s.Id).FirstOrDefaultAsync(ct)
                 ?? throw Error("Chưa cấu hình ca làm mặc định. Hãy liên hệ HCNS.", 503);
+        }
+        if (previousShiftId is null && x.ShiftId is { } chosenShift) await ValidateDepartmentShift(id, chosenShift, ct);
+        var shift = await repo.Query<WorkShift>().SingleOrDefaultAsync(s => s.Id == selectedShiftId, ct)
+            ?? throw Error("Ca làm việc đã chọn không còn tồn tại.", 409);
         var location = schedule?.LocationId is { } locationId
             ? await repo.Query<WorkLocation>().SingleOrDefaultAsync(l => l.Id == locationId, ct)
                 ?? throw Error("Địa điểm trong lịch làm không còn tồn tại. Hãy liên hệ quản lý.", 409)
