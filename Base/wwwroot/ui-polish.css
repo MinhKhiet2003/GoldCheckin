@@ -132,3 +132,11 @@ dialog { width: min(620px,calc(100vw - 32px)); padding: 28px; border-radius: 16p
   #modal-form .form-grid { gap: 13px; }
   #modal-form .field input, #modal-form .field select, #modal-form .field textarea { font-size: 16px; }
 }
+
+#modal-form .department-shift-options{gap:10px;margin-top:12px}
+#modal-form .department-shift-options label{min-height:60px;padding:14px 16px;gap:12px;line-height:1.45;overflow:hidden}
+#modal-form .department-shift-options input[type=radio]{appearance:auto;-webkit-appearance:radio;display:inline-block;flex:0 0 18px;width:18px!important;min-width:18px;height:18px;min-height:18px;margin:0!important;padding:0!important;border:0!important;border-radius:50%;background:transparent;box-shadow:none!important;outline:0;accent-color:var(--green);cursor:pointer}
+#modal-form .department-shift-options input[type=radio]:focus-visible{outline:2px solid #64a887;outline-offset:3px;box-shadow:none!important}
+#modal-form .department-shift-options label span{flex:1;min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.5}
+#modal-form .department-shift-options label:has(input:checked){border-color:#91c4a6;background:#edf7f0;box-shadow:inset 3px 0 0 var(--green)}
+@media(max-width:600px){#modal-form .department-shift-options{gap:8px}#modal-form .department-shift-options label{min-height:54px;padding:12px 13px}}

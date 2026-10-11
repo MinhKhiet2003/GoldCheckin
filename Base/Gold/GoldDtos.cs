@@ -20,9 +20,10 @@ public record EmployeeInput([Required, MaxLength(40)] string Code, Guid Departme
 public record FaceEnrollmentInput([Required, MaxLength(7_000_000)] string ImageBase64);
 public record LocationInput([Required, MaxLength(150)] string Name, [Required, MaxLength(500)] string Address,
     [Range(-90, 90)] double Latitude, [Range(-180, 180)] double Longitude, [Range(10, 1000)] int RadiusMeters, bool Active);
-public record ShiftInput([Required, MaxLength(100)] string Name, TimeOnly Start, TimeOnly End);
-public record DepartmentShiftInput([MaxLength(10)] Guid[] MorningShiftIds, [MaxLength(10)] Guid[] AfternoonShiftIds,
-    [MaxLength(10)] Guid[] FullDayShiftIds);
+public record ShiftInput([Required, MaxLength(100)] string Name, TimeOnly Start, TimeOnly End,
+    [RegularExpression("morning|afternoon|evening")] string? Period = null);
+public record DepartmentShiftInput([MaxLength(10)] Guid[]? MorningShiftIds, [MaxLength(10)] Guid[]? AfternoonShiftIds,
+    [MaxLength(10)] Guid[]? EveningShiftIds);
 public record DepartmentInput([Required, MaxLength(150)] string Name, [MaxLength(500)] string Description = "");
 public record ScheduleInput(Guid EmployeeId, DateOnly Date, Guid? ShiftId, Guid? LocationId,
     [RegularExpression("work|off")] string Kind);

@@ -11,7 +11,7 @@ public static class GoldModel
     {
         b.Entity<Department>().ToTable("GoldDepartment");
         b.Entity<DepartmentShift>().ToTable("GoldDepartmentShift");
-        b.Entity<DepartmentShift>().ToTable(t => t.HasCheckConstraint("CK_GoldDepartmentShift_Period", "\"Period\" IN ('morning','afternoon','fullDay')"));
+        b.Entity<DepartmentShift>().ToTable(t => t.HasCheckConstraint("CK_GoldDepartmentShift_Period", "\"Period\" IN ('morning','afternoon','evening')"));
         b.Entity<DepartmentShift>().HasKey(x => new { x.DepartmentId, x.ShiftId });
         b.Entity<DepartmentShift>().HasOne<Department>().WithMany().HasForeignKey(x => x.DepartmentId).OnDelete(DeleteBehavior.Cascade);
         b.Entity<DepartmentShift>().HasOne<WorkShift>().WithMany().HasForeignKey(x => x.ShiftId).OnDelete(DeleteBehavior.Restrict);
@@ -41,12 +41,12 @@ public static class GoldModel
             RadiusMeters = 100,
             Active = true
         });
-        b.Entity<WorkShift>().ToTable("GoldShift");
+        b.Entity<WorkShift>().ToTable("GoldShift", t => t.HasCheckConstraint("CK_GoldShift_Period", "\"Period\" IN ('morning','afternoon','evening')"));
         b.Entity<WorkShift>().HasData(
-            new WorkShift { Id = Guid.Parse("20000000-0000-0000-0000-000000000001"), Name = "Ca hành chính", Start = new(7, 30), End = new(17, 0) },
-            new WorkShift { Id = Guid.Parse("20000000-0000-0000-0000-000000000002"), Name = "Ca sáng", Start = new(7, 30), End = new(12, 0) },
-            new WorkShift { Id = Guid.Parse("20000000-0000-0000-0000-000000000003"), Name = "Ca chiều", Start = new(13, 0), End = new(17, 0) },
-            new WorkShift { Id = Guid.Parse("20000000-0000-0000-0000-000000000004"), Name = "Ca tối", Start = new(17, 0), End = new(21, 0) });
+            new WorkShift { Id = Guid.Parse("20000000-0000-0000-0000-000000000001"), Name = "Ca hành chính", Period = "morning", Start = new(7, 30), End = new(17, 0) },
+            new WorkShift { Id = Guid.Parse("20000000-0000-0000-0000-000000000002"), Name = "Ca sáng", Period = "morning", Start = new(7, 30), End = new(12, 0) },
+            new WorkShift { Id = Guid.Parse("20000000-0000-0000-0000-000000000003"), Name = "Ca chiều", Period = "afternoon", Start = new(13, 0), End = new(17, 0) },
+            new WorkShift { Id = Guid.Parse("20000000-0000-0000-0000-000000000004"), Name = "Ca tối", Period = "evening", Start = new(17, 0), End = new(21, 0) });
         b.Entity<AttendancePolicy>().ToTable("GoldPolicy");
         b.Entity<AttendancePolicy>().HasData(new AttendancePolicy());
         b.Entity<PayrollLock>().ToTable("GoldPayrollLock");

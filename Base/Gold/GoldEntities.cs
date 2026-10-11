@@ -41,6 +41,7 @@ public class WorkShift
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     [MaxLength(100)] public string Name { get; set; } = "";
+    [MaxLength(20)] public string Period { get; set; } = "morning";
     public TimeOnly Start { get; set; }
     public TimeOnly End { get; set; }
 }

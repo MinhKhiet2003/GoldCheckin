@@ -443,10 +443,12 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
         await RequireHr(id, admin, ct);
         if (x.End <= x.Start) throw Error("Ca phải kết thúc sau giờ bắt đầu; phiên bản này dùng ca trong ngày.");
         var s = shiftId is null ? new WorkShift() : await repo.Query<WorkShift>().SingleOrDefaultAsync(s => s.Id == shiftId, ct) ?? throw Error("Không có ca.", 404);
-        if (shiftId is not null && (s.Start != x.Start || s.End != x.End) && await repo.Query<WorkSchedule>().AnyAsync(w => w.ShiftId == shiftId && w.Date <= Today, ct))
+        var period = x.Period ?? (x.Start >= new TimeOnly(17, 0) ? "evening"
+            : x.Start >= new TimeOnly(12, 0) ? "afternoon" : "morning");
+        if (shiftId is not null && (s.Start != x.Start || s.End != x.End || s.Period != period) && await repo.Query<WorkSchedule>().AnyAsync(w => w.ShiftId == shiftId && w.Date <= Today, ct))
             throw Error("Ca đã được dùng trong lịch hiện tại hoặc quá khứ. Hãy tạo ca mới để giữ dữ liệu đối soát.", 409);
-        audit.Begin("Update", "GoldShift", s.Id, new { s.Name, s.Start, s.End }); if (shiftId is null) repo.Add(s);
-        s.Name = x.Name; s.Start = x.Start; s.End = x.End; await repo.Save(ct); audit.Complete(s); return s;
+        audit.Begin("Update", "GoldShift", s.Id, new { s.Name, s.Start, s.End, s.Period }); if (shiftId is null) repo.Add(s);
+        s.Name = x.Name; s.Start = x.Start; s.End = x.End; s.Period = period; await repo.Save(ct); audit.Complete(s); return s;
     }
     public async Task SavePolicy(Guid id, bool admin, PolicyInput x, CancellationToken ct)
     {
@@ -467,30 +469,22 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
         {
             ("morning", input.MorningShiftIds ?? []),
             ("afternoon", input.AfternoonShiftIds ?? []),
-            ("fullDay", input.FullDayShiftIds ?? [])
+            ("evening", input.EveningShiftIds ?? [])
         };
+        if (groups.Any(group => group.Ids.Length > 1))
+            throw Error("Chỉ được chọn một ca trong mỗi nhóm ca sáng, chiều hoặc tối.");
         var selectedIds = groups.SelectMany(group => group.Ids).ToArray();
         if (selectedIds.Distinct().Count() != selectedIds.Length)
             throw Error("Mỗi ca chỉ được chọn một nhóm thời gian.");
         if (selectedIds.Length > 30 || await repo.Query<WorkShift>().CountAsync(s => selectedIds.Contains(s.Id), ct) != selectedIds.Length)
             throw Error("Một hoặc nhiều ca làm việc không hợp lệ.");
-        foreach (var id in groups.Single(group => group.Period == "morning").Ids)
+        foreach (var group in groups)
         {
-            var shift = await repo.Query<WorkShift>().SingleAsync(s => s.Id == id, ct);
-            if (shift.Start >= new TimeOnly(12, 0) || shift.End > new TimeOnly(12, 0))
-                throw Error($"Ca {shift.Name} không nằm hoàn toàn trong buổi sáng.");
-        }
-        foreach (var id in groups.Single(group => group.Period == "afternoon").Ids)
-        {
-            var shift = await repo.Query<WorkShift>().SingleAsync(s => s.Id == id, ct);
-            if (shift.Start < new TimeOnly(12, 0) || shift.End <= new TimeOnly(12, 0))
-                throw Error($"Ca {shift.Name} không nằm hoàn toàn trong buổi chiều.");
-        }
-        foreach (var id in groups.Single(group => group.Period == "fullDay").Ids)
-        {
-            var shift = await repo.Query<WorkShift>().SingleAsync(s => s.Id == id, ct);
-            if (shift.Start >= new TimeOnly(12, 0) || shift.End <= new TimeOnly(12, 0))
-                throw Error($"Ca {shift.Name} không bao phủ cả buổi sáng và buổi chiều.");
+            var mismatchedShift = await repo.Query<WorkShift>()
+                .Where(s => group.Ids.Contains(s.Id) && s.Period != group.Period)
+                .Select(s => s.Name).FirstOrDefaultAsync(ct);
+            if (mismatchedShift is not null)
+                throw Error($"Ca {mismatchedShift} không được phân loại là {group.Period} trong danh sách ca làm việc.");
         }
         await using var tx = await repo.Transaction(ct);
         var existing = await repo.Query<DepartmentShift>().Where(x => x.DepartmentId == departmentId).ToListAsync(ct);
@@ -553,8 +547,8 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
         if (!await configured.AnyAsync(ct)) return;
         var shift = await repo.Query<WorkShift>().SingleOrDefaultAsync(s => s.Id == shiftId, ct)
             ?? throw Error("Ca làm việc không tồn tại.");
-        var period = shift.Start >= new TimeOnly(12, 0) ? "afternoon"
-            : shift.End <= new TimeOnly(12, 0) ? "morning" : "fullDay";
+        var period = shift.Start >= new TimeOnly(17, 0) ? "evening"
+            : shift.Start >= new TimeOnly(12, 0) ? "afternoon" : "morning";
         if (!await configured.AnyAsync(x => x.ShiftId == shiftId && x.Period == period, ct))
             throw Error("Ca làm không thuộc nhóm ca đã cấu hình cho phòng ban nhân viên.");
     }
