@@ -327,7 +327,7 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
         var attachmentName = r.AttachmentId is null ? null : await repo.Query<UploadedFile>().Where(f => f.Id == r.AttachmentId).Select(f => f.OriginalName).SingleOrDefaultAsync(ct);
         var handoverName = r.HandoverEmployeeId is null ? null : await repo.Query<Account>().Where(a => a.Id == r.HandoverEmployeeId).Select(a => a.FullName).SingleOrDefaultAsync(ct);
         var linkedAttendance = r.AttendanceId is null ? null : await repo.Query<AttendanceRecord>().SingleOrDefaultAsync(a => a.Id == r.AttendanceId, ct);
-        return new { r.Id, r.Type, r.LeaveKind, r.From, r.To, r.Reason, r.Handover, r.Status, r.Version, r.ReplacesRequestId, r.IsCancellation, r.LeaveSession, leaveStart = r.LeaveStart.ToString(), leaveEnd = r.LeaveEnd.ToString(), r.PaidLeaveDays, r.UnpaidLeaveDays, r.AttachmentId, attachmentName, r.HandoverEmployeeId, handoverName, r.AttendanceId, r.ActualTime, supplementPunches = GetSupplementPunches(r), r.SystemRecordedAt, systemRecordedDate = r.SystemRecordedDate ?? linkedAttendance?.Date, systemRecordedAt = r.SystemRecordedAt ?? linkedAttendance?.RecordedAt, attendanceType = linkedAttendance?.Type ?? r.AttendanceType, attendanceStatus = linkedAttendance?.Status, attendanceDeviationMinutes = linkedAttendance?.DeviationMinutes, r.PartnerDate, canEdit = r.Type == "regular" ? await CanEditRegular(id, r, ct) : r.Type == "leave" && await CanEditLeave(id, r, ct), canCancel = r.EmployeeId == id && r.Type == "leave" && r.Status == "approved" && await CanApproveChange(r, ct) };
+        return new { r.Id, r.Type, r.LeaveKind, r.From, r.To, r.Reason, r.Handover, r.Status, r.Version, r.ReplacesRequestId, r.IsCancellation, r.LeaveSession, leaveStart = r.LeaveStart.ToString(), leaveEnd = r.LeaveEnd.ToString(), r.PaidLeaveDays, r.UnpaidLeaveDays, r.AttachmentId, attachmentName, r.HandoverEmployeeId, handoverName, r.AttendanceId, r.ActualTime, supplementPunches = GetSupplementPunches(r), systemRecordedDate = r.SystemRecordedDate ?? linkedAttendance?.Date, systemRecordedAt = r.SystemRecordedAt ?? linkedAttendance?.RecordedAt, attendanceType = linkedAttendance?.Type ?? r.AttendanceType, attendanceStatus = linkedAttendance?.Status, attendanceDeviationMinutes = linkedAttendance?.DeviationMinutes, r.PartnerDate, canEdit = r.Type == "regular" ? await CanEditRegular(id, r, ct) : r.Type == "leave" && await CanEditLeave(id, r, ct), canCancel = r.EmployeeId == id && r.Type == "leave" && r.Status == "approved" && await CanApproveChange(r, ct) };
     }
     public async Task<UploadedFile> Attachment(Guid id, bool admin, Guid requestId, CancellationToken ct)
     {
@@ -558,13 +558,17 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
             if (r.AttendanceId is not null && attendance is null) throw Error("Không tìm thấy lượt chấm công của chính nhân viên.");
             if (attendance is not null && attendance.Status is not ("late" or "early-leave" or "early-checkin" or "offsite" or "late-offsite" or "early-leave-offsite" or "early-checkin-offsite"))
                 throw Error("Chỉ dùng giải trình cho lượt chấm công bất thường. Trường hợp quên chấm vào/ra, hãy gửi đơn bổ sung chấm công.");
-            if (r.From != r.To || r.From > Today || (attendance is not null && r.ActualTime is null)) throw Error("Giải trình cần ngày thực tế; nếu chọn lượt chấm công hệ thống thì cần nhập giờ thực tế.");
-            var actualAt = r.ActualTime is TimeOnly actualTime ? DateTime.SpecifyKind(r.From.ToDateTime(actualTime).AddHours(-7), DateTimeKind.Utc) : (DateTime?)null;
-            if (actualAt > UtcNow) throw Error("Giờ chấm công thực tế không thể ở tương lai.");
-            if (await repo.Query<PayrollLock>().AnyAsync(l => l.Id == r.From.Year * 100 + r.From.Month || (attendance != null && l.Id == attendance.Date.Year * 100 + attendance.Date.Month), ct)) throw Error("Bảng công của ngày chấm công đã khóa.");
-            if (attendance is not null && actualAt is DateTime recordedAt && await repo.Query<AttendanceRecord>().AnyAsync(a => a.Id != attendance.Id && a.EmployeeId == e.Id && a.Date == r.From && a.Type == attendance.Type && a.RecordedAt == recordedAt, ct)) throw Error("Ngày thực tế đã có lượt chấm công trùng giờ.");
-            var actualSchedule = await repo.Query<WorkSchedule>().SingleOrDefaultAsync(s => s.EmployeeId == e.Id && s.Date == r.From, ct);
-            if (actualSchedule is null || actualSchedule.Kind != "work" || actualSchedule.ShiftId is null || actualSchedule.LocationId is null) throw Error("Ngày thực tế cần có lịch làm việc hợp lệ.");
+            if (attendance is not null)
+            {
+                if (r.From != r.To || r.From > Today || r.ActualTime is null) throw Error("Khi liên kết lượt chấm công hệ thống, cần chọn ngày và giờ thực tế hợp lệ.");
+                var actualAt = DateTime.SpecifyKind(r.From.ToDateTime(r.ActualTime.Value).AddHours(-7), DateTimeKind.Utc);
+                if (actualAt > UtcNow) throw Error("Giờ chấm công thực tế không thể ở tương lai.");
+                var lockedMonths = new[] { r.From.Year * 100 + r.From.Month, attendance.Date.Year * 100 + attendance.Date.Month }.Distinct().ToArray();
+                if (await repo.Query<PayrollLock>().AnyAsync(l => lockedMonths.Contains(l.Id), ct)) throw Error("Bảng công của ngày chấm công đã khóa.");
+                if (await repo.Query<AttendanceRecord>().AnyAsync(a => a.Id != attendance.Id && a.EmployeeId == e.Id && a.Date == r.From && a.Type == attendance.Type && a.RecordedAt == actualAt, ct)) throw Error("Ngày thực tế đã có lượt chấm công trùng giờ.");
+                var actualSchedule = await repo.Query<WorkSchedule>().SingleOrDefaultAsync(s => s.EmployeeId == e.Id && s.Date == r.From, ct);
+                if (actualSchedule is null || actualSchedule.Kind != "work" || actualSchedule.ShiftId is null || actualSchedule.LocationId is null) throw Error("Ngày thực tế cần có lịch làm việc hợp lệ.");
+            }
         }
         if (r.Type == "supplement")
         {
