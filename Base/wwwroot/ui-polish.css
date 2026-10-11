@@ -146,3 +146,23 @@ dialog { width: min(620px,calc(100vw - 32px)); padding: 28px; border-radius: 16p
 .confirm-dialog-icon{display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;border-radius:50%;background:#fff1ed;color:#b54738;font-size:19px;font-weight:700}
 #confirm-accept{border-color:#b54738;background:#b54738;color:#fff}
 #confirm-accept:hover{background:#9e3e32}
+
+.checkin-layout{align-items:stretch;gap:20px}
+.checkin-layout>.panel{overflow:hidden;border-radius:14px}
+.checkin-layout>.panel:first-child .panel-body{padding:20px}
+.face-capture-stage{min-height:340px;padding:26px;gap:clamp(20px,3vw,38px);border:1px solid #dcebe1;border-radius:16px;background:radial-gradient(circle at 22% 20%,#fff 0,#f8fcf9 48%,#eef7f1 100%)}
+.face-capture-ring{width:min(270px,36vw);border-width:8px;border-color:#b3d2bd}
+.face-camera{inset:10px;background:#18382d}
+.face-camera video{transform:none!important;-webkit-transform:none!important;object-position:center 42%;object-fit:cover}
+.face-capture-instructions{max-width:250px}
+.face-capture-instructions b{color:#214d39;line-height:1.5}
+.face-capture-instructions p{color:#687e70;line-height:1.7}
+.face-enroll-admin .face-capture-stage{min-height:280px;padding:18px;border-radius:14px}
+.face-enroll-admin .face-capture-ring{width:min(210px,54vw)}
+.face-enroll-admin #camera-access-status{margin-top:14px}
+.face-enroll-admin #face-camera-start,.face-enroll-admin #face-capture{min-height:42px;margin:12px 8px 0 0}
+.face-enroll-admin .face-guidance{flex-wrap:wrap;line-height:1.5}
+.punch-reason{display:block;margin-top:18px}
+.punch-reason textarea{min-height:82px;border-color:#dce8df;border-radius:10px;padding:12px;line-height:1.5}
+@media(max-width:850px){.checkin-layout{grid-template-columns:1fr;gap:16px}.face-capture-stage{min-height:0;padding:22px;gap:18px}.face-capture-ring{width:min(270px,58vw)}.face-capture-instructions{max-width:420px}}
+@media(max-width:600px){.checkin-layout>.panel:first-child .panel-body{padding:14px}.face-capture-stage{padding:18px 12px;gap:15px}.face-capture-ring{width:min(250px,72vw)}.face-capture-instructions{text-align:center;padding:0 6px}.face-capture-instructions b{font-size:14px}.face-capture-instructions p{font-size:11px}.face-actions{margin-top:14px}.face-actions .btn{width:100%;min-height:48px}.punch-reason textarea{font-size:16px}.face-enroll-admin .face-capture-stage{padding:14px 10px}.face-enroll-admin .face-capture-ring{width:min(200px,64vw)}.face-enroll-admin #face-camera-start,.face-enroll-admin #face-capture{width:100%;margin:10px 0 0}}
