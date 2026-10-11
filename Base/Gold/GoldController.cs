@@ -254,6 +254,28 @@ public class GoldController(
         return Success();
     }
 
+    [HttpPut("departments/{id:guid}/shifts")]
+    public async Task<ActionResult> DepartmentShifts(Guid id, DepartmentShiftInput x, CancellationToken ct)
+    {
+        await service.SaveDepartmentShifts(UserId, Admin, id, x, ct);
+        return Success();
+    }
+
+    [HttpPost("departments")]
+    public async Task<ActionResult> CreateDepartment(DepartmentInput x, CancellationToken ct) =>
+        Success(await service.SaveDepartment(UserId, Admin, null, x, ct));
+
+    [HttpPut("departments/{id:guid}")]
+    public async Task<ActionResult> UpdateDepartment(Guid id, DepartmentInput x, CancellationToken ct) =>
+        Success(await service.SaveDepartment(UserId, Admin, id, x, ct));
+
+    [HttpDelete("departments/{id:guid}")]
+    public async Task<ActionResult> DeleteDepartment(Guid id, CancellationToken ct)
+    {
+        await service.DeleteDepartment(UserId, Admin, id, ct);
+        return Success();
+    }
+
     [HttpPost("schedule")]
     public async Task<ActionResult> Schedule(
         ScheduleInput x,
@@ -399,6 +421,16 @@ public class GoldController(
                 Admin,
                 id,
                 ct));
+    }
+
+    [HttpPut("requests/{id:guid}/supplement-attendance")]
+    public async Task<ActionResult> CorrectSupplementAttendance(
+        Guid id,
+        SupplementAttendanceCorrectionInput x,
+        CancellationToken ct)
+    {
+        await service.CorrectSupplementAttendance(UserId, Admin, id, x, ct);
+        return Success();
     }
 
     [HttpGet("requests/{id:guid}/attachment")]

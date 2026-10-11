@@ -887,6 +887,29 @@ namespace Base.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Base.Gold.DepartmentShift", b =>
+                {
+                    b.Property<Guid>("DepartmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ShiftId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Period")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("DepartmentId", "ShiftId");
+
+                    b.HasIndex("ShiftId");
+
+                    b.ToTable("GoldDepartmentShift", (string)null, t =>
+                        {
+                            t.HasCheckConstraint("CK_GoldDepartmentShift_Period", "\"Period\" IN ('morning','afternoon','fullDay')");
+                        });
+                });
+
             modelBuilder.Entity("Base.Gold.Employee", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1338,6 +1361,21 @@ namespace Base.Migrations
                     b.HasOne("Base.Entities.Account", null)
                         .WithOne()
                         .HasForeignKey("Base.Gold.Employee", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Base.Gold.DepartmentShift", b =>
+                {
+                    b.HasOne("Base.Gold.Department", null)
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Base.Gold.WorkShift", null)
+                        .WithMany()
+                        .HasForeignKey("ShiftId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

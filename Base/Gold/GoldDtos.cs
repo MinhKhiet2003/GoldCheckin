@@ -21,6 +21,9 @@ public record FaceEnrollmentInput([Required, MaxLength(7_000_000)] string ImageB
 public record LocationInput([Required, MaxLength(150)] string Name, [Required, MaxLength(500)] string Address,
     [Range(-90, 90)] double Latitude, [Range(-180, 180)] double Longitude, [Range(10, 1000)] int RadiusMeters, bool Active);
 public record ShiftInput([Required, MaxLength(100)] string Name, TimeOnly Start, TimeOnly End);
+public record DepartmentShiftInput([MaxLength(10)] Guid[] MorningShiftIds, [MaxLength(10)] Guid[] AfternoonShiftIds,
+    [MaxLength(10)] Guid[] FullDayShiftIds);
+public record DepartmentInput([Required, MaxLength(150)] string Name, [MaxLength(500)] string Description = "");
 public record ScheduleInput(Guid EmployeeId, DateOnly Date, Guid? ShiftId, Guid? LocationId,
     [RegularExpression("work|off")] string Kind);
 public record ScheduleBatchInput(Guid EmployeeId, DateOnly From, DateOnly To, Guid ShiftId, Guid LocationId,
@@ -35,6 +38,8 @@ public record PunchInput([RegularExpression("in|out")] string Type, [Range(-90, 
     [Required, MaxLength(200)] string Device, [Required, MaxLength(7_000_000)] string ImageBase64,
     [MaxLength(2000)] string Reason = "");
 public record SupplementPunchInput(TimeOnly Time, [Required, RegularExpression("in|out")] string Type);
+public record SupplementAttendanceCorrectionInput(DateOnly Date,
+    [Required, MinLength(1), MaxLength(4)] SupplementPunchInput[] Punches, int Version);
 public record RequestInput([Required, RegularExpression("leave|regular|swap|explanation|supplement")] string Type,
     [Required, RegularExpression("annual|unpaid|sick|personal|marriage|bereavement|maternity|other")] string LeaveKind,
     DateOnly From, DateOnly To, [MaxLength(2000)] string Reason = "",

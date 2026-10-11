@@ -56,6 +56,7 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
                                 where a.IsActive
                                 select new { e.Id, name = a.FullName, e.Position }).ToListAsync(ct),
             departments = await (admin || actor.GoldRole == "hr" ? repo.Query<Department>() : repo.Query<Department>().Where(d => d.Id == actor.DepartmentId)).OrderBy(d => d.Id).ToListAsync(ct),
+            departmentShifts = await repo.Query<DepartmentShift>().ToListAsync(ct),
             locations = await repo.Query<WorkLocation>().ToListAsync(ct),
             shifts = await repo.Query<WorkShift>().ToListAsync(ct),
             policy = await repo.Query<AttendancePolicy>().SingleAsync(ct),
@@ -327,7 +328,100 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
         var attachmentName = r.AttachmentId is null ? null : await repo.Query<UploadedFile>().Where(f => f.Id == r.AttachmentId).Select(f => f.OriginalName).SingleOrDefaultAsync(ct);
         var handoverName = r.HandoverEmployeeId is null ? null : await repo.Query<Account>().Where(a => a.Id == r.HandoverEmployeeId).Select(a => a.FullName).SingleOrDefaultAsync(ct);
         var linkedAttendance = r.AttendanceId is null ? null : await repo.Query<AttendanceRecord>().SingleOrDefaultAsync(a => a.Id == r.AttendanceId, ct);
-        return new { r.Id, r.Type, r.LeaveKind, r.From, r.To, r.Reason, r.Handover, r.Status, r.Version, r.ReplacesRequestId, r.IsCancellation, r.LeaveSession, leaveStart = r.LeaveStart.ToString(), leaveEnd = r.LeaveEnd.ToString(), r.PaidLeaveDays, r.UnpaidLeaveDays, r.AttachmentId, attachmentName, r.HandoverEmployeeId, handoverName, r.AttendanceId, r.ActualTime, supplementPunches = GetSupplementPunches(r), systemRecordedDate = r.SystemRecordedDate ?? linkedAttendance?.Date, systemRecordedAt = r.SystemRecordedAt ?? linkedAttendance?.RecordedAt, attendanceType = linkedAttendance?.Type ?? r.AttendanceType, attendanceStatus = linkedAttendance?.Status, attendanceDeviationMinutes = linkedAttendance?.DeviationMinutes, r.PartnerDate, canEdit = r.Type == "regular" ? await CanEditRegular(id, r, ct) : r.Type == "leave" && await CanEditLeave(id, r, ct), canCancel = r.EmployeeId == id && r.Type == "leave" && r.Status == "approved" && await CanApproveChange(r, ct) };
+        return new { r.Id, r.Type, r.LeaveKind, r.From, r.To, r.Reason, r.Handover, r.Status, r.Version, r.ReplacesRequestId, r.IsCancellation, r.LeaveSession, leaveStart = r.LeaveStart.ToString(), leaveEnd = r.LeaveEnd.ToString(), r.PaidLeaveDays, r.UnpaidLeaveDays, r.AttachmentId, attachmentName, r.HandoverEmployeeId, handoverName, r.AttendanceId, r.ActualTime, supplementPunches = GetSupplementPunches(r), systemRecordedDate = r.SystemRecordedDate ?? linkedAttendance?.Date, systemRecordedAt = r.SystemRecordedAt ?? linkedAttendance?.RecordedAt, attendanceType = linkedAttendance?.Type ?? r.AttendanceType, attendanceStatus = linkedAttendance?.Status, attendanceDeviationMinutes = linkedAttendance?.DeviationMinutes, r.PartnerDate, canEdit = r.Type == "regular" ? await CanEditRegular(id, r, ct) : r.Type == "leave" && await CanEditLeave(id, r, ct), canEditSupplementAttendance = admin && r.Type == "supplement" && r.Status == "approved", canCancel = r.EmployeeId == id && r.Type == "leave" && r.Status == "approved" && await CanApproveChange(r, ct) };
+    }
+    public async Task CorrectSupplementAttendance(Guid actorId, bool admin, Guid requestId,
+        SupplementAttendanceCorrectionInput input, CancellationToken ct)
+    {
+        if (!admin) throw Error("Chỉ admin được sửa chấm công bổ sung đã duyệt.", 403);
+        if (input.Punches is null || input.Punches.Length is < 1 or > 4)
+            throw Error("Cần nhập từ 1 đến 4 lượt chấm công.");
+        if (input.Date > Today) throw Error("Ngày chấm công không thể ở tương lai.");
+        if (input.Punches.Any(p => p.Type is not ("in" or "out")) ||
+            input.Punches.Zip(input.Punches.Skip(1), (a, b) => b.Time <= a.Time).Any(outOfOrder => outOfOrder) ||
+            input.Punches.Zip(input.Punches.Skip(1), (a, b) => a.Type == b.Type).Any(repeatedType => repeatedType))
+            throw Error("Các lượt chấm công phải theo thứ tự thời gian và luân phiên vào/ra.");
+        if (input.Punches.Any(p => DateTime.SpecifyKind(input.Date.ToDateTime(p.Time).AddHours(-7), DateTimeKind.Utc) > UtcNow))
+            throw Error("Giờ chấm công không thể ở tương lai.");
+
+        await using var tx = await repo.Transaction(ct);
+        var request = await repo.Query<GoldRequest>().SingleOrDefaultAsync(r => r.Id == requestId, ct)
+            ?? throw Error("Không tìm thấy yêu cầu bổ sung chấm công.", 404);
+        if (request.Type != "supplement" || request.Status != "approved")
+            throw Error("Chỉ được sửa yêu cầu bổ sung chấm công đã duyệt.", 409);
+        if (request.Version != input.Version) throw Error("Yêu cầu đã được cập nhật. Tải lại trang rồi thử lại.", 409);
+
+        var oldPunches = GetSupplementPunches(request);
+        if (oldPunches.Length != input.Punches.Length)
+            throw Error("Không thể thay đổi số lượt chấm công của yêu cầu đã duyệt.", 409);
+
+        var dates = new[] { request.From, input.Date };
+        var periods = dates.Select(d => d.Year * 100 + d.Month).Distinct().ToArray();
+        if (await repo.Query<PayrollLock>().AnyAsync(l => periods.Contains(l.Id), ct))
+            throw Error("Bảng công của ngày cũ hoặc ngày mới đã khóa.", 409);
+        if (await repo.Query<WorkSchedule>().AnyAsync(s => s.EmployeeId == request.EmployeeId &&
+                dates.Contains(s.Date) && s.Locked, ct) ||
+            await repo.Query<ScheduleLock>().AnyAsync(l => periods.Contains(l.Id), ct))
+            throw Error("Lịch làm của ngày cũ hoặc ngày mới đã khóa.", 409);
+
+        var schedule = await repo.Query<WorkSchedule>().SingleOrDefaultAsync(s =>
+            s.EmployeeId == request.EmployeeId && s.Date == input.Date && s.Kind == "work", ct);
+        if (schedule?.ShiftId is not Guid shiftId || schedule.LocationId is not Guid locationId)
+            throw Error("Ngày mới chưa được xếp ca làm hợp lệ.");
+
+        var records = new List<AttendanceRecord>(oldPunches.Length);
+        for (var index = 0; index < oldPunches.Length; index++)
+        {
+            var verificationId = $"request:{request.Id}:{index + 1}";
+            var record = await repo.Query<AttendanceRecord>().SingleOrDefaultAsync(a =>
+                a.EmployeeId == request.EmployeeId && a.VerificationId == verificationId, ct);
+            if (record is null) throw Error("Không tìm thấy lượt chấm công đã tạo từ yêu cầu này.", 409);
+            records.Add(record);
+        }
+        if (records.Any(record => record.Date != request.From || record.Status != "supplemented"))
+            throw Error("Dữ liệu lượt chấm công không còn khớp với đơn bổ sung này.", 409);
+        var recordPeriods = records.Select(record => record.Date).Append(input.Date)
+            .Select(date => date.Year * 100 + date.Month).Distinct().ToArray();
+        if (await repo.Query<PayrollLock>().AnyAsync(lockRow => recordPeriods.Contains(lockRow.Id), ct))
+            throw Error("Một số tháng liên quan đã khóa bảng công.", 409);
+
+        var otherPunches = await repo.Query<AttendanceRecord>().Where(a => a.EmployeeId == request.EmployeeId &&
+                a.Date == input.Date && !records.Select(record => record.Id).Contains(a.Id))
+            .Select(a => new SupplementPunchInput(TimeOnly.FromDateTime(a.RecordedAt.AddHours(7)), a.Type))
+            .ToListAsync(ct);
+        // Approved supplement punches already exist in GoldAttendance, so the attendance query above
+        // is the authoritative timeline for other requests as well.
+        otherPunches.AddRange(input.Punches);
+        otherPunches = otherPunches.OrderBy(p => p.Time).ToList();
+        if (otherPunches.Count > 4) throw Error("Một ngày chỉ có thể ghi nhận tối đa 4 lượt chấm công.");
+        if (otherPunches.Zip(otherPunches.Skip(1), (a, b) => a.Time == b.Time).Any(duplicate => duplicate))
+            throw Error("Đã có lượt chấm công trùng thời gian trong ngày.");
+        if (otherPunches.Zip(otherPunches.Skip(1), (a, b) => a.Type == b.Type).Any(repeatedType => repeatedType))
+            throw Error("Các lượt chấm công trong ngày phải luân phiên giờ vào và giờ ra.");
+
+        audit.Begin("CorrectSupplementAttendance", "GoldRequest", request.Id,
+            new { request.From, Punches = oldPunches, request.Version });
+        for (var index = 0; index < records.Count; index++)
+        {
+            var punch = input.Punches[index];
+            var record = records[index];
+            record.Date = input.Date;
+            record.ShiftId = shiftId;
+            record.LocationId = locationId;
+            record.RecordedAt = DateTime.SpecifyKind(input.Date.ToDateTime(punch.Time).AddHours(-7), DateTimeKind.Utc);
+            record.Type = punch.Type;
+            record.Status = "supplemented";
+            record.Reason = request.Reason;
+        }
+        request.From = input.Date;
+        request.To = input.Date;
+        request.SupplementPunchesJson = JsonSerializer.Serialize(input.Punches);
+        request.ActualTime = input.Punches[0].Time;
+        request.AttendanceType = input.Punches[0].Type;
+        request.Version++;
+        await repo.Save(ct);
+        await tx.CommitAsync(ct);
+        audit.Complete(new { request.From, Punches = input.Punches, request.Version, ActorId = actorId });
     }
     public async Task<UploadedFile> Attachment(Guid id, bool admin, Guid requestId, CancellationToken ct)
     {
@@ -363,6 +457,107 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
         p.WeekendRestricted = x.WeekendRestricted; p.MaxGpsAccuracyMeters = x.MaxGpsAccuracyMeters; p.OvertimeAfterMinutes = x.OvertimeAfterMinutes;
         await repo.Save(ct); audit.Complete(p);
     }
+    public async Task SaveDepartmentShifts(Guid actorId, bool admin, Guid departmentId,
+        DepartmentShiftInput input, CancellationToken ct)
+    {
+        await RequireHr(actorId, admin, ct);
+        if (!await repo.Query<Department>().AnyAsync(d => d.Id == departmentId, ct))
+            throw Error("Phòng ban không tồn tại.", 404);
+        var groups = new (string Period, Guid[] Ids)[]
+        {
+            ("morning", input.MorningShiftIds ?? []),
+            ("afternoon", input.AfternoonShiftIds ?? []),
+            ("fullDay", input.FullDayShiftIds ?? [])
+        };
+        var selectedIds = groups.SelectMany(group => group.Ids).ToArray();
+        if (selectedIds.Distinct().Count() != selectedIds.Length)
+            throw Error("Mỗi ca chỉ được chọn một nhóm thời gian.");
+        if (selectedIds.Length > 30 || await repo.Query<WorkShift>().CountAsync(s => selectedIds.Contains(s.Id), ct) != selectedIds.Length)
+            throw Error("Một hoặc nhiều ca làm việc không hợp lệ.");
+        foreach (var id in groups.Single(group => group.Period == "morning").Ids)
+        {
+            var shift = await repo.Query<WorkShift>().SingleAsync(s => s.Id == id, ct);
+            if (shift.Start >= new TimeOnly(12, 0) || shift.End > new TimeOnly(12, 0))
+                throw Error($"Ca {shift.Name} không nằm hoàn toàn trong buổi sáng.");
+        }
+        foreach (var id in groups.Single(group => group.Period == "afternoon").Ids)
+        {
+            var shift = await repo.Query<WorkShift>().SingleAsync(s => s.Id == id, ct);
+            if (shift.Start < new TimeOnly(12, 0) || shift.End <= new TimeOnly(12, 0))
+                throw Error($"Ca {shift.Name} không nằm hoàn toàn trong buổi chiều.");
+        }
+        foreach (var id in groups.Single(group => group.Period == "fullDay").Ids)
+        {
+            var shift = await repo.Query<WorkShift>().SingleAsync(s => s.Id == id, ct);
+            if (shift.Start >= new TimeOnly(12, 0) || shift.End <= new TimeOnly(12, 0))
+                throw Error($"Ca {shift.Name} không bao phủ cả buổi sáng và buổi chiều.");
+        }
+        await using var tx = await repo.Transaction(ct);
+        var existing = await repo.Query<DepartmentShift>().Where(x => x.DepartmentId == departmentId).ToListAsync(ct);
+        audit.Begin("ConfigureDepartmentShifts", "GoldDepartment", departmentId, existing);
+        foreach (var row in existing) repo.Remove(row);
+        foreach (var row in groups.SelectMany(group => group.Ids.Select(shiftId => new DepartmentShift
+        {
+            DepartmentId = departmentId,
+            ShiftId = shiftId,
+            Period = group.Period
+        }))) repo.Add(row);
+        await repo.Save(ct);
+        await tx.CommitAsync(ct);
+        audit.Complete(new { departmentId, ShiftCount = selectedIds.Length });
+    }
+
+    public async Task<Department> SaveDepartment(Guid actorId, bool admin, Guid? departmentId,
+        DepartmentInput input, CancellationToken ct)
+    {
+        await RequireHr(actorId, admin, ct);
+        var name = input.Name.Trim();
+        if (string.IsNullOrWhiteSpace(name)) throw Error("Tên phòng ban không được để trống.");
+        if (await repo.Query<Department>().AnyAsync(d => d.Name.ToLower() == name.ToLower() && d.Id != departmentId, ct))
+            throw Error("Tên phòng ban đã tồn tại.");
+
+        var department = departmentId is null
+            ? new Department()
+            : await repo.Query<Department>().SingleOrDefaultAsync(d => d.Id == departmentId, ct)
+              ?? throw Error("Không tìm thấy phòng ban.", 404);
+        audit.Begin(departmentId is null ? "Create" : "Update", "GoldDepartment", department.Id,
+            new { department.Name, department.Description });
+        if (departmentId is null) repo.Add(department);
+        department.Name = name;
+        department.Description = input.Description?.Trim() ?? "";
+        await repo.Save(ct);
+        audit.Complete(new { department.Id, department.Name, department.Description });
+        return department;
+    }
+
+    public async Task DeleteDepartment(Guid actorId, bool admin, Guid departmentId, CancellationToken ct)
+    {
+        await RequireHr(actorId, admin, ct);
+        var department = await repo.Query<Department>().SingleOrDefaultAsync(d => d.Id == departmentId, ct)
+            ?? throw Error("Không tìm thấy phòng ban.", 404);
+        if (await repo.Query<Employee>().AnyAsync(e => e.DepartmentId == departmentId, ct) ||
+            await repo.Query<StaffingRule>().AnyAsync(r => r.DepartmentId == departmentId, ct))
+            throw Error("Không thể xóa phòng ban đang có nhân viên hoặc quy tắc nhân sự. Hãy chuyển nhân viên và xóa quy tắc trước.", 409);
+
+        audit.Begin("Delete", "GoldDepartment", department.Id, new { department.Name, department.Description });
+        repo.Remove(department);
+        await repo.Save(ct);
+        audit.Complete(new { department.Id, department.Name });
+    }
+
+    private async Task ValidateDepartmentShift(Guid employeeId, Guid shiftId, CancellationToken ct)
+    {
+        var departmentId = await repo.Query<Employee>().Where(e => e.Id == employeeId)
+            .Select(e => e.DepartmentId).SingleOrDefaultAsync(ct);
+        var configured = repo.Query<DepartmentShift>().Where(x => x.DepartmentId == departmentId);
+        if (!await configured.AnyAsync(ct)) return;
+        var shift = await repo.Query<WorkShift>().SingleOrDefaultAsync(s => s.Id == shiftId, ct)
+            ?? throw Error("Ca làm việc không tồn tại.");
+        var period = shift.Start >= new TimeOnly(12, 0) ? "afternoon"
+            : shift.End <= new TimeOnly(12, 0) ? "morning" : "fullDay";
+        if (!await configured.AnyAsync(x => x.ShiftId == shiftId && x.Period == period, ct))
+            throw Error("Ca làm không thuộc nhóm ca đã cấu hình cho phòng ban nhân viên.");
+    }
     public async Task<object> Schedule(Guid id, bool admin, ScheduleInput x, CancellationToken ct)
     {
         var actor = await Actor(id, admin, ct);
@@ -371,6 +566,7 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
         if (x.Kind == "work" && (x.ShiftId is null || x.LocationId is null
             || !await repo.Query<WorkShift>().AnyAsync(s => s.Id == x.ShiftId, ct)
             || !await repo.Query<WorkLocation>().AnyAsync(l => l.Id == x.LocationId && l.Active, ct))) throw Error("Ca làm hoặc địa điểm không hợp lệ.");
+        if (x.Kind == "work") await ValidateDepartmentShift(x.EmployeeId, x.ShiftId!.Value, ct);
         await using var tx = await repo.Transaction(ct);
         var s = await repo.Query<WorkSchedule>().SingleOrDefaultAsync(s => s.EmployeeId == x.EmployeeId && s.Date == x.Date, ct);
         if (s?.Locked == true || await repo.Query<ScheduleLock>().AnyAsync(l => l.Id == x.Date.Year * 100 + x.Date.Month, ct)
@@ -414,6 +610,7 @@ public class GoldService(IGoldRepository repo, IFaceVerifier face, AuditContext 
         var dates = GoldRules.Dates(x.From, x.To).ToArray();
         if (dates.Length > 31 || x.WorkingDays.Any(d => (int)d < 0 || (int)d > 6)) throw Error("Chỉ xếp tối đa 31 ngày với các thứ hợp lệ.");
         if (!await repo.Query<WorkShift>().AnyAsync(s => s.Id == x.ShiftId, ct) || !await repo.Query<WorkLocation>().AnyAsync(l => l.Id == x.LocationId && l.Active, ct)) throw Error("Ca hoặc địa điểm không hợp lệ.");
+        await ValidateDepartmentShift(x.EmployeeId, x.ShiftId, ct);
         await using var tx = await repo.Transaction(ct);
         var periods = dates.Select(d => d.Year * 100 + d.Month).Distinct().ToArray();
         if (await repo.Query<ScheduleLock>().AnyAsync(l => periods.Contains(l.Id), ct) || await repo.Query<PayrollLock>().AnyAsync(l => periods.Contains(l.Id), ct)) throw Error("Có tháng đã khóa trong khoảng xếp lịch.", 409);

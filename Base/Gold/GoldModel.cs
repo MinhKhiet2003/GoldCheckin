@@ -10,6 +10,11 @@ public static class GoldModel
     public static void Configure(ModelBuilder b)
     {
         b.Entity<Department>().ToTable("GoldDepartment");
+        b.Entity<DepartmentShift>().ToTable("GoldDepartmentShift");
+        b.Entity<DepartmentShift>().ToTable(t => t.HasCheckConstraint("CK_GoldDepartmentShift_Period", "\"Period\" IN ('morning','afternoon','fullDay')"));
+        b.Entity<DepartmentShift>().HasKey(x => new { x.DepartmentId, x.ShiftId });
+        b.Entity<DepartmentShift>().HasOne<Department>().WithMany().HasForeignKey(x => x.DepartmentId).OnDelete(DeleteBehavior.Cascade);
+        b.Entity<DepartmentShift>().HasOne<WorkShift>().WithMany().HasForeignKey(x => x.ShiftId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<Department>().HasData(new[] {
             "BP Da liễu thẩm mỹ", "BP Phục hồi chức năng - Y học cổ truyền", "BP Tiêm chủng", "Nhà thuốc",
             "Phòng Hành chính - tổng hợp", "Phòng Kinh doanh và tăng trưởng", "Phòng Tài chính - kế toán"

@@ -8,6 +8,12 @@ public class Department
     [MaxLength(150)] public string Name { get; set; } = "";
     [MaxLength(500)] public string Description { get; set; } = "";
 }
+public class DepartmentShift
+{
+    public Guid DepartmentId { get; set; }
+    public Guid ShiftId { get; set; }
+    [MaxLength(20)] public string Period { get; set; } = "morning";
+}
 public class Employee
 {
     public Guid Id { get; set; }
